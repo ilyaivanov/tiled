@@ -1,0 +1,140 @@
+body {
+    margin: 0;
+    overflow: hidden;
+    font-family: "Segoe UI";
+
+    user-select: none;
+}
+
+.panel {
+    position: absolute;
+    border-radius: 4px;
+    background-color: white;
+    overflow: hidden;
+    box-shadow: rgba(0, 0, 0, 0.3) 1px 1px 5px 0px;
+}
+
+.panel {
+    display: flex;
+    flex-direction: column;
+}
+
+.panel-body {
+    overflow-y: auto;
+    flex: 1;
+}
+
+.panel-body::-webkit-scrollbar {
+    width: 8px;
+}
+.panel-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.panel-body::-webkit-scrollbar-thumb {
+    background: #b7b7b7;
+}
+
+.panel-body::-webkit-scrollbar-thumb:hover {
+    background: #a3a3a3;
+}
+
+.yt-video-panel {
+    overflow: hidden;
+}
+
+.yt-preview {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.play-overlay {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+}
+
+.play-overlay:hover {
+    background-color: rgba(0, 0, 0, 0.3);
+}
+
+.play-overlay:hover .yt-play {
+    opacity: 1;
+}
+
+.yt-play {
+    fill: white;
+    width: 20px;
+    opacity: 0;
+}
+
+.panel-dragger {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    /* height: 10px;
+    width: 10px; */
+    cursor: nwse-resize;
+    border-left: 12px solid transparent;
+    border-right: 12px solid transparent;
+    border-top: 12px solid grey;
+    rotate: -45deg;
+    translate: 8px 2px;
+    opacity: 0;
+    transition: opacity 200ms ease-in-out;
+}
+.panel:hover .panel-dragger {
+    opacity: 1;
+}
+
+.panel-resizing:hover .panel-dragger {
+    border-top: 12px solid red;
+}
+
+/*          */
+/* Playlist */
+/*          */
+
+.playlist-title {
+    font-weight: bold;
+    text-align: center;
+    padding: 4px;
+    border-bottom: 1px solid rgb(226, 226, 226);
+    cursor: grab;
+
+    transition: background-color 200ms ease-in-out;
+}
+
+.panel-grabbing .playlist-title {
+    cursor: grabbing;
+}
+
+.playlist-title:hover {
+    background-color: rgb(237, 237, 237);
+}
+
+.playlist-item {
+    display: flex;
+    align-items: center;
+    padding: 4px 8px;
+    font-size: 14px;
+    border-bottom: 1px solid rgb(210, 210, 210);
+}
+
+.playlist-item:hover {
+    background-color: rgb(234, 234, 234);
+}
+
+.playlist-item-image {
+    width: 66px;
+    height: 48px;
+    object-fit: cover;
+    margin-right: 8px;
+}
