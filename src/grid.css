@@ -116,6 +116,10 @@ body {
     cursor: grabbing;
 }
 
+.panel-resizing {
+    opacity: 0.6;
+}
+
 .playlist-title:hover {
     background-color: rgb(237, 237, 237);
 }

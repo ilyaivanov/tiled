@@ -7,7 +7,7 @@ import { anjunadeep, deepHouse, globalUndergroundItems, xeniaPlaylist } from "./
 
 import "./grid.css";
 
-let shift = vec(25, 25);
+let shift = vec(0, 0);
 const scale = 1;
 let mouse = { x: 0, y: 0 };
 const cellSize = 100;
@@ -15,6 +15,7 @@ const gap = 10;
 
 let isSpaceDown = false;
 let mousePosMoving = { x: 0, y: 0 };
+let mouseDeltaDuringResize = { x: 0, y: 0 };
 const targetedGrid = { x: 0, y: 0 };
 let panelMoving: Panel | undefined = undefined;
 let panelResizing: Panel | undefined = undefined;
@@ -61,10 +62,8 @@ window.addEventListener("mousemove", (e) => {
 
     mouse = newMousePos;
 
-    if (panelMoving) updatePanel(panelMoving, diff(mouse, mousePosMoving));
-
-    if (panelResizing) {
-    }
+    onMoving();
+    onResizing();
 });
 
 function startMoving(panel: Panel) {
@@ -74,6 +73,10 @@ function startMoving(panel: Panel) {
 
     panel.el.classList.add("panel-grabbing");
     mousePosMoving = { ...mouse };
+}
+
+function onMoving() {
+    if (panelMoving) updatePanel(panelMoving, diff(mouse, mousePosMoving));
 }
 
 function stopMoving() {
@@ -89,13 +92,36 @@ function stopMoving() {
 
 function startResizing(panel: Panel) {
     panelResizing = panel;
+    const panelWidth = (panelResizing.gridX + panelResizing.gridSpanRow) * (cellSize + gap) - gap;
+    const panelHeight = (panelResizing.gridY + panelResizing.gridSpanCol) * (cellSize + gap) - gap;
+
+    mouseDeltaDuringResize = {
+        x: panelWidth - mouse.x + shift.x,
+        y: panelHeight - mouse.y + shift.y,
+    };
 
     panel.el.classList.add("panel-resizing");
+    onResizing();
+}
+
+function onResizing() {
+    if (panelResizing) {
+        const width =
+            mouse.x + mouseDeltaDuringResize.x - shift.x - panelResizing.gridX * (cellSize + gap);
+        const height =
+            mouse.y + mouseDeltaDuringResize.y - shift.y - panelResizing.gridY * (cellSize + gap);
+
+        panelResizing.gridSpanRow = Math.round(width / (cellSize + gap));
+        panelResizing.gridSpanCol = Math.round(height / (cellSize + gap));
+        panelResizing.el.style.width = width + "px";
+        panelResizing.el.style.height = height + "px";
+    }
 }
 
 function stopResizing() {
     if (panelResizing) {
         panelResizing.el.classList.remove("panel-resizing");
+        updatePanel(panelResizing);
 
         panelResizing = undefined;
     }
@@ -121,7 +147,7 @@ function draw() {
     if (panelMoving) {
         ctx.fillStyle = "#E0E0E0";
 
-        const p = panelMoving;
+        const p = panelMoving ? panelMoving : panelResizing!;
         const nearestGridX = Math.round(
             (p.gridX * (cellSize + gap) + mouse.x - mousePosMoving.x) / (cellSize + gap)
         );
@@ -135,6 +161,18 @@ function draw() {
         ctx.fillRect(
             shift.x + nearestGridX * (cellSize + gap),
             shift.y + nearestGridY * (cellSize + gap),
+            p.gridSpanRow * (cellSize + gap) - gap,
+            p.gridSpanCol * (cellSize + gap) - gap
+        );
+    }
+
+    if (panelResizing) {
+        ctx.fillStyle = "#E0E0E0";
+
+        const p = panelResizing;
+        ctx.fillRect(
+            shift.x + p.gridX * (cellSize + gap),
+            shift.y + p.gridY * (cellSize + gap),
             p.gridSpanRow * (cellSize + gap) - gap,
             p.gridSpanCol * (cellSize + gap) - gap
         );
