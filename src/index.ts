@@ -120,8 +120,8 @@ function onMoving() {
 
         panelMovingShadowPos = { ...snappedGridPosition };
 
-        setPanelPosition(
-            panelMoving,
+        setElemPosition(
+            panelMoving.el,
             addAll(diff(mouse, mousePosMoving), shift, gridToAbs(panelMoving.gridPos))
         );
     }
