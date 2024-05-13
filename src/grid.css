@@ -6,15 +6,18 @@ body {
     user-select: none;
 }
 
+body.dark > .panel {
+    background-color: #202836;
+    color: rgb(225, 225, 225);
+}
+
 .panel {
     position: absolute;
     border-radius: 4px;
     background-color: white;
     overflow: hidden;
     box-shadow: rgba(0, 0, 0, 0.3) 1px 1px 5px 0px;
-}
 
-.panel {
     display: flex;
     flex-direction: column;
 }
@@ -112,12 +115,25 @@ body {
     transition: background-color 200ms ease-in-out;
 }
 
+body.dark .playlist-title {
+    border-bottom: 1px solid rgb(89, 89, 89);
+}
+body.dark .playlist-item {
+    border-bottom: 1px solid rgb(89, 89, 89);
+}
+body.dark .playlist-title:hover {
+    background-color: rgb(53, 53, 53);
+}
+body.dark .playlist-item:hover {
+    background-color: rgb(53, 53, 53);
+}
+
 .panel-grabbing .playlist-title {
     cursor: grabbing;
 }
 
 .panel-resizing {
-    opacity: 0.6;
+    opacity: 0.5;
 }
 
 .playlist-title:hover {
@@ -141,4 +157,67 @@ body {
     height: 48px;
     object-fit: cover;
     margin-right: 8px;
+}
+
+/*             */
+/*   NAVBAR    */
+/*             */
+
+.navbar {
+    height: 30px;
+    position: fixed;
+    z-index: 100;
+    top: 0;
+    left: 0;
+    right: 0;
+
+    background-color: white;
+    box-shadow: 0 0 8px 0 rgba(0, 0, 0, 0.12);
+
+    display: flex;
+    /* gap: 48px; */
+    justify-content: center;
+    align-items: stretch;
+
+    transition: height 200ms ease-in-out;
+}
+
+.navbar:hover {
+    height: 58px;
+}
+
+body.dark .navbar {
+    background-color: #151a23;
+}
+
+.navbar-item {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    color: rgb(162, 168, 177);
+
+    border-bottom: 1px solid transparent;
+    cursor: pointer;
+    margin: 0 5px;
+    padding: 0 19px;
+
+    padding-top: 1px;
+    transition:
+        border-bottom-width 200ms ease-in-out,
+        padding-top 200ms ease-in-out;
+}
+
+.navbar-item:hover {
+    color: white;
+}
+
+.navbar-item.active {
+    color: rgb(85, 150, 230);
+    border-bottom: 1px solid rgb(85, 150, 230);
+}
+
+.navbar:hover .navbar-item {
+    border-bottom-width: 4px;
+    padding-top: 4px;
 }

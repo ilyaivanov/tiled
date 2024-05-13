@@ -1,4 +1,4 @@
-import { Point } from "./vec";
+import { V2 } from "./vec";
 
 const canvas = document.createElement("canvas");
 export const ctx = canvas.getContext("2d")!;
@@ -23,3 +23,7 @@ export function onResize() {
 }
 onResize();
 window.addEventListener("resize", onResize);
+
+export function fillRect(topLeft: V2, size: V2) {
+    ctx.fillRect(topLeft.x, topLeft.y, size.x, size.y);
+}
