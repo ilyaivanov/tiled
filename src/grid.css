@@ -190,6 +190,10 @@ body.dark .navbar {
     background-color: #151a23;
 }
 
+.navbar-item:first-of-type {
+    margin-left: auto;
+}
+
 .navbar-item {
     display: flex;
     justify-content: center;
@@ -220,4 +224,56 @@ body.dark .navbar {
 .navbar:hover .navbar-item {
     border-bottom-width: 4px;
     padding-top: 4px;
+}
+
+.theme-toggler {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    margin-left: auto;
+    margin-right: 20px;
+
+    padding: 10px;
+    align-self: center;
+    border-radius: 30px;
+
+    opacity: 0;
+    transition: opacity 200ms ease-in-out;
+
+    cursor: pointer;
+}
+
+.navbar:hover .theme-toggler {
+    opacity: 1;
+}
+
+.theme-toggler:hover {
+    background-color: rgb(93, 93, 93);
+}
+
+.theme-toggler:active {
+    background-color: rgb(126, 126, 126);
+}
+
+.theme-toggler:hover svg {
+    fill: white;
+}
+
+.theme-toggler svg {
+    width: 15px;
+    fill: rgb(156, 156, 156);
+}
+
+/*                    */
+/*       Player       */
+/*                    */
+
+.mini-player {
+    position: fixed;
+    right: 15px;
+    bottom: 65px;
+    width: 400px;
+    height: 150px;
+    z-index: 100;
 }

@@ -1,12 +1,14 @@
 import { ctx, fillRect } from "./ui/canvas";
-import { lastTime, start } from "./ui/framework";
+import { start } from "./ui/framework";
 import { div, img, setElemPosition, setElemSize, span } from "./ui/html";
 import { V2, add, addAll, addScalar, diff, divide, lerp, mult, roundV2, vec } from "./ui/vec";
 
-import { anjunadeep, deepHouse, globalUndergroundItems, xeniaPlaylist } from "./data";
+// import { anjunadeep, deepHouse, globalUndergroundItems, xeniaPlaylist } from "./data";
 
 import "./grid.css";
 import { country } from "./data.boards";
+import { play, youtubeIframeId } from "./youtubePlayer";
+import { moonIcon, sunIcon } from "./ui/icons";
 
 //also defined in CSS
 const headerHeight = 58;
@@ -38,6 +40,7 @@ const lightColors = {
     panelPlaceholder: "grey",
 };
 let colors = lightColors;
+let themeToggler: HTMLElement;
 
 const gridToAbs = (v: V2) => mult(v, cellSize + gap);
 const absToGrid = (v: V2) => roundV2(divide(v, cellSize + gap));
@@ -47,12 +50,13 @@ function toggleBlackMode() {
 
     document.body.classList.toggle("dark", isBlack);
 
-    if (isBlack) colors = darkColors;
-    else colors = lightColors;
-}
-
-if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
-    toggleBlackMode();
+    if (isBlack) {
+        colors = darkColors;
+        themeToggler.replaceChildren(sunIcon());
+    } else {
+        colors = lightColors;
+        themeToggler.replaceChildren(moonIcon());
+    }
 }
 
 window.addEventListener("keydown", (e) => {
@@ -235,6 +239,7 @@ function ytPlaylist(panel: Panel) {
                                 }),
                                 i.title,
                             ],
+                            onClick: () => play(i.videoId),
                         })
                     ),
                 ],
@@ -244,11 +249,12 @@ function ytPlaylist(panel: Panel) {
     });
     return panelEl;
 }
+type Item = { title: string; videoId: string };
 type Panel = {
     title: string;
     gridPos: V2;
     gridSpan: V2;
-    data: typeof xeniaPlaylist;
+    data: Item[];
     el: HTMLElement;
 };
 
@@ -258,7 +264,7 @@ function panelAt(
     gridSpanRow: number,
     gridSpanCol: number,
     title: string,
-    data: typeof xeniaPlaylist
+    data: Item[]
 ) {
     const panel: Panel = {
         gridPos: vec(gridX, gridY),
@@ -274,16 +280,7 @@ function panelAt(
 let panels: Panel[] = [];
 
 function loadBoard(title: string) {
-    if (title == "Electro") {
-        panels = [
-            panelAt(0, 0, 4, 4, "Anjunadeep Edition", anjunadeep),
-            panelAt(1, 5, 4, 4, "Xenia UA", xeniaPlaylist),
-            panelAt(5, 5, 3, 4, "Xenia UA", xeniaPlaylist),
-            panelAt(8, 5, 2, 4, "Xenia UA", xeniaPlaylist),
-            panelAt(5, 1, 4, 3, "Deep House", deepHouse),
-            panelAt(9, 1, 4, 3, "Global Underground", globalUndergroundItems),
-        ];
-    } else if (title == "Country") {
+    if (title == "Country") {
         const panelObjects: Panel[] = [
             //
             panelAt(0, 0, 3, 8, "", []),
@@ -291,9 +288,9 @@ function loadBoard(title: string) {
             panelAt(6, 0, 3, 7, "", []),
             panelAt(3, 2, 3, 3, "", []),
         ];
-        panels = country[0].stacks.map((s, i) => {
+        panels = country[0].panels.map((s, i) => {
             const p = panelObjects[i];
-            p.data = s.items.map((item) => ({ title: item.name, videoId: item.itemId }));
+            p.data = s.items.map((item) => ({ title: item.name, videoId: item.videoId }));
             p.title = s.name;
             p.el = ytPlaylist(p);
             return p;
@@ -307,9 +304,23 @@ function loadBoard(title: string) {
             panelAt(3, 3, 3, 4, "", []),
             panelAt(5, 0, 4, 3, "", []),
         ];
-        panels = country[1].stacks.map((s, i) => {
+        panels = country[1].panels.map((s, i) => {
             const p = panelObjects[i];
-            p.data = s.items.map((item) => ({ title: item.name, videoId: item.itemId }));
+            p.data = s.items.map((item) => ({ title: item.name, videoId: item.videoId }));
+            p.title = s.name;
+            p.el = ytPlaylist(p);
+            return p;
+        });
+    } else if (title == "Blues") {
+        const panelObjects: Panel[] = [
+            panelAt(0, 0, 2, 2, "", []),
+            panelAt(4, 0, 2, 2, "", []),
+            panelAt(0, 2, 2, 2, "", []),
+            panelAt(2, 0, 2, 2, "", []),
+        ];
+        panels = country[2].panels.map((s, i) => {
+            const p = panelObjects[i];
+            p.data = s.items.map((item) => ({ title: item.name, videoId: item.videoId }));
             p.title = s.name;
             p.el = ytPlaylist(p);
             return p;
@@ -359,12 +370,25 @@ function navbarItem(title: string, isActive = false) {
     return res;
 }
 
-const tabs = ["Electro", "Country", "Meditation"];
+const tabs = ["Country", "Meditation", "Blues"];
 
 document.body.append(
     div({
         className: "navbar",
-        children: tabs.map((t, i) => navbarItem(t, i == 2)),
+        children: [
+            ...tabs.map((t, i) => navbarItem(t, i == 0)),
+            div({
+                className: "theme-toggler",
+                onClick: toggleBlackMode,
+                ref: (ref) => (themeToggler = ref),
+                children: [sunIcon()],
+            }),
+        ],
     }),
+    div({ id: youtubeIframeId, className: "mini-player" }),
     ...panels.map((p) => p.el)
 );
+
+if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+    toggleBlackMode();
+}
