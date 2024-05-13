@@ -10,10 +10,21 @@ import { country } from "./data.boards";
 import { youtubeIframeId } from "./youtubePlayer";
 import { moonIcon, sunIcon } from "./ui/icons";
 import { playItem } from "./player";
+import {
+    getIsDark,
+    getOffset,
+    getSelectedBoard,
+    loadPanelStateForBoard,
+    saveOffset,
+    savePanelState,
+    setIsDark,
+    setSelectedBoard,
+} from "./localStorage";
 
 //also defined in CSS
 const headerHeight = 58;
 
+let screen = vec(window.innerWidth, window.innerHeight);
 const scale = 1;
 let mouse = { x: 0, y: 0 };
 const cellSize = 100;
@@ -48,7 +59,11 @@ const absToGrid = (v: V2) => roundV2(divide(v, cellSize + gap));
 
 function toggleBlackMode() {
     isBlack = !isBlack;
+    setIsDark(isBlack);
+    applyTheme();
+}
 
+function applyTheme() {
     document.body.classList.toggle("dark", isBlack);
 
     if (isBlack) {
@@ -61,8 +76,6 @@ function toggleBlackMode() {
 }
 
 window.addEventListener("keydown", (e) => {
-    if (e.code == "KeyB" && e.ctrlKey) toggleBlackMode();
-
     if (e.code == "Space") {
         if (!document.body.style.cursor) document.body.style.cursor = "grab";
         isSpaceDown = true;
@@ -71,6 +84,7 @@ window.addEventListener("keydown", (e) => {
 });
 window.addEventListener("keyup", (e) => {
     if (e.code == "Space") {
+        if (isSpaceDown) saveOffset(shift, boardName);
         isSpaceDown = false;
         document.body.style.removeProperty("cursor");
     }
@@ -89,6 +103,12 @@ window.addEventListener("mouseup", (e) => {
 
     stopMoving();
     stopResizing();
+});
+
+window.addEventListener("resize", () => {
+    shift.x += (window.innerWidth - screen.x) / 2;
+    updatePosition();
+    screen = vec(window.innerWidth, window.innerHeight);
 });
 
 window.addEventListener("mousemove", (e) => {
@@ -139,6 +159,7 @@ function stopMoving() {
         panelMoving.el.classList.remove("panel-grabbing");
         updatePanel(panelMoving);
 
+        if (boardName) savePanelState(panels, boardName);
         panelMoving = undefined;
     }
 }
@@ -175,6 +196,7 @@ function stopResizing() {
         panelResizing.el.classList.remove("panel-resizing");
         updatePanel(panelResizing);
 
+        if (boardName) savePanelState(panels, boardName);
         panelResizing = undefined;
     }
 }
@@ -278,17 +300,23 @@ function panelAt(
     return panel;
 }
 
+let boardName: string = getSelectedBoard() || "Country";
 let panels: Panel[] = [];
 
 function loadBoard(title: string) {
+    boardName = title;
+    setSelectedBoard(title);
+    shift = getOffset(title) || vec((window.innerWidth - 1000) / 2, gap + headerHeight);
     if (title == "Country") {
-        const panelObjects: Panel[] = [
-            //
-            panelAt(0, 0, 3, 8, "", []),
-            panelAt(3, 0, 3, 2, "", []),
-            panelAt(6, 0, 3, 7, "", []),
-            panelAt(3, 2, 3, 3, "", []),
-        ];
+        let panelObjects = loadPanelStateForBoard(title);
+        if (!panelObjects)
+            panelObjects = [
+                panelAt(0, 0, 3, 8, "", []),
+                panelAt(3, 0, 3, 2, "", []),
+                panelAt(6, 0, 3, 7, "", []),
+                panelAt(3, 2, 3, 3, "", []),
+            ];
+
         panels = country[0].panels.map((s, i) => {
             const p = panelObjects[i];
             p.data = s.items.map((item) => ({ title: item.name, videoId: item.videoId }));
@@ -297,14 +325,15 @@ function loadBoard(title: string) {
             return p;
         });
     } else if (title == "Meditation") {
-        const panelObjects: Panel[] = [
-            //
-            panelAt(0, 0, 3, 7, "", []),
-            panelAt(3, 2, 2, 1, "", []),
-            panelAt(3, 0, 2, 2, "", []),
-            panelAt(3, 3, 3, 4, "", []),
-            panelAt(5, 0, 4, 3, "", []),
-        ];
+        let panelObjects = loadPanelStateForBoard(title);
+        if (!panelObjects)
+            panelObjects = [
+                panelAt(0, 0, 3, 7, "", []),
+                panelAt(3, 2, 2, 1, "", []),
+                panelAt(3, 0, 2, 2, "", []),
+                panelAt(3, 3, 3, 4, "", []),
+                panelAt(5, 0, 4, 3, "", []),
+            ];
         panels = country[1].panels.map((s, i) => {
             const p = panelObjects[i];
             p.data = s.items.map((item) => ({ title: item.name, videoId: item.videoId }));
@@ -313,12 +342,14 @@ function loadBoard(title: string) {
             return p;
         });
     } else if (title == "Blues") {
-        const panelObjects: Panel[] = [
-            panelAt(0, 0, 2, 2, "", []),
-            panelAt(4, 0, 2, 2, "", []),
-            panelAt(0, 2, 2, 2, "", []),
-            panelAt(2, 0, 2, 2, "", []),
-        ];
+        let panelObjects = loadPanelStateForBoard(title);
+        if (!panelObjects)
+            panelObjects = [
+                panelAt(0, 0, 2, 2, "", []),
+                panelAt(4, 0, 2, 2, "", []),
+                panelAt(0, 2, 2, 2, "", []),
+                panelAt(2, 0, 2, 2, "", []),
+            ];
         panels = country[2].panels.map((s, i) => {
             const p = panelObjects[i];
             p.data = s.items.map((item) => ({ title: item.name, videoId: item.videoId }));
@@ -358,7 +389,7 @@ function activate(this: HTMLElement, title: string) {
     loadBoard(title);
 }
 
-function navbarItem(title: string, isActive = false) {
+function navbarItem(title: string) {
     const res = span({
         className: "navbar-item",
         onClick: function () {
@@ -366,7 +397,9 @@ function navbarItem(title: string, isActive = false) {
         },
         children: [title],
     });
-    if (isActive) activate.call(res, title);
+
+    //ugly, but runs only once during initial render
+    if (title == boardName) activate.call(res, title);
 
     return res;
 }
@@ -377,7 +410,7 @@ document.body.append(
     div({
         className: "navbar",
         children: [
-            ...tabs.map((t, i) => navbarItem(t, i == 0)),
+            ...tabs.map(navbarItem),
             div({
                 className: "theme-toggler",
                 onClick: toggleBlackMode,
@@ -390,6 +423,11 @@ document.body.append(
     ...panels.map((p) => p.el)
 );
 
-if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+const savedIsDark = getIsDark();
+if (
+    typeof savedIsDark == "undefined" &&
+    window.matchMedia &&
+    window.matchMedia("(prefers-color-scheme: dark)").matches
+) {
     toggleBlackMode();
-}
+} else if (savedIsDark) toggleBlackMode();
