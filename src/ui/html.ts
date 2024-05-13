@@ -8,11 +8,11 @@ type Props<T> = {
     ref?: (elem: T) => void;
     onClick?: (this: HTMLElement, mouse: MouseEvent) => void;
     onMouseDown?: (this: HTMLElement, mouse: MouseEvent) => void;
-    onInput?: (this: HTMLElement, ev: Event & { currentTarget: HTMLElement }) => void;
+    // onInput?: (this: HTMLElement, ev: Event & { currentTarget: HTMLElement }) => void;
 };
 
 type InputProps<T> = Props<T> & {
-    onInput?: (this: HTMLElement) => void;
+    onInput?: (this: T) => void;
     from?: number;
     to?: number;
     step?: number;
@@ -24,6 +24,7 @@ export const input = (props: InputProps<HTMLInputElement>) => {
     const res = assignHtmlElementProps(document.createElement("input"), props);
     if (props.type) res.type = props.type;
     if (props.value) res.value = props.value;
+    if (props.onInput) res.addEventListener("input", props.onInput);
     return res;
 };
 
@@ -74,7 +75,6 @@ function assignHtmlElementProps<T extends HTMLElement>(elem: T, props: Props<T>)
 
     if (props.onClick) elem.addEventListener("click", props.onClick);
     if (props.onMouseDown) elem.addEventListener("mousedown", props.onMouseDown);
-    if (props.onInput) elem.addEventListener("input", props.onInput as any);
 
     if (props.ref) props.ref(elem);
 

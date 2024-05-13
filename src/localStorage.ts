@@ -44,3 +44,13 @@ export function getOffset(boardName: string): V2 | undefined {
     if (saved) return JSON.parse(saved);
     return undefined;
 }
+
+export function saveGridProps(size: number, gap: number) {
+    localStorage.setItem("GRID - OPS", JSON.stringify({ size, gap }));
+}
+
+export function getGridProps(): { size: number; gap: number } {
+    const saved = localStorage.getItem("GRID - OPS");
+    if (saved) return JSON.parse(saved);
+    return { size: 100, gap: 10 };
+}

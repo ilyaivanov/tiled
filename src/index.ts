@@ -1,5 +1,5 @@
 import { ctx, fillRect } from "./ui/canvas";
-import { start } from "./ui/framework";
+import { lastTime, start } from "./ui/framework";
 import { div, img, input, setElemPosition, setElemSize, span } from "./ui/html";
 import { V2, add, addAll, addScalar, diff, divide, mult, roundV2, vec } from "./ui/vec";
 
@@ -11,10 +11,12 @@ import { youtubeIframeId } from "./youtubePlayer";
 import { moonIcon, sunIcon } from "./ui/icons";
 import { playItem } from "./player";
 import {
+    getGridProps,
     getIsDark,
     getOffset,
     getSelectedBoard,
     loadPanelStateForBoard,
+    saveGridProps,
     saveOffset,
     savePanelState,
     setIsDark,
@@ -27,8 +29,9 @@ const headerHeight = 58;
 let screen = vec(window.innerWidth, window.innerHeight);
 const scale = 1;
 let mouse = { x: 0, y: 0 };
-const cellSize = 100;
-const gap = 10;
+const gridProps = getGridProps();
+let cellSize = gridProps.size;
+let gap = gridProps.gap;
 let shift = vec(gap, gap + headerHeight);
 
 let isSpaceDown = false;
@@ -214,6 +217,11 @@ function draw() {
     ctx.fillRect(0, 0, 20000, 20000);
 
     if (isGridVisible) {
+        if (hideGridAt < lastTime) {
+            isGridVisible = false;
+            hideGridAt = Infinity;
+        }
+
         ctx.fillStyle = colors.panel;
 
         for (let x = -20; x < 20; x++) {
@@ -406,11 +414,101 @@ function navbarItem(title: string) {
 
 const tabs = ["Country", "Meditation", "Blues"];
 
+let gridSizeEl: HTMLInputElement;
+let gridGapEl: HTMLInputElement;
+let hideGridAt = Infinity;
+
+function updateGridDimensions(newCellSize: number, newGap: number) {
+    if (newCellSize >= 1 && newGap >= 1) {
+        console.log(newCellSize, newGap);
+        cellSize = newCellSize;
+        gridSizeEl.value = cellSize + "";
+        gap = newGap;
+        gridGapEl.value = gap + "";
+
+        updatePosition();
+        isGridVisible = true;
+        hideGridAt = lastTime + 1000;
+
+        saveGridProps(cellSize, gap);
+    }
+}
+
 document.body.append(
     div({
         className: "navbar",
         children: [
             ...tabs.map(navbarItem),
+            input({
+                className: "reset-btn",
+                type: "button",
+                value: "Reset every change",
+                onClick: () => {
+                    localStorage.clear();
+                    location.reload();
+                },
+            }),
+            div({
+                className: "group",
+                children: [
+                    div({ className: "group-title", children: ["Grid size"] }),
+                    div({
+                        className: "group-controls",
+                        children: [
+                            input({
+                                type: "button",
+                                value: "-",
+                                onClick: () => updateGridDimensions(cellSize, gap - 1),
+                            }),
+                            input({
+                                className: "group-input",
+                                type: "input",
+                                value: gap + "",
+                                ref: (ref) => (gridGapEl = ref),
+                                onInput: function () {
+                                    console.log(this);
+                                    updateGridDimensions(cellSize, +this.value);
+                                },
+                            }),
+                            input({
+                                type: "button",
+                                value: "+",
+                                onClick: () => updateGridDimensions(cellSize, gap + 1),
+                            }),
+                        ],
+                    }),
+                ],
+            }),
+            div({
+                className: "group",
+                children: [
+                    div({ className: "group-title", children: ["Grid gap"] }),
+                    div({
+                        className: "group-controls",
+                        children: [
+                            input({
+                                type: "button",
+                                value: "-",
+                                onClick: () => updateGridDimensions(cellSize - 1, gap),
+                            }),
+                            input({
+                                className: "group-input",
+                                type: "input",
+                                ref: (ref) => (gridSizeEl = ref),
+                                value: cellSize + "",
+                                onInput: function () {
+                                    updateGridDimensions(+this.value, gap);
+                                },
+                            }),
+                            input({
+                                type: "button",
+                                value: "+",
+                                onClick: () => updateGridDimensions(cellSize + 1, gap),
+                            }),
+                        ],
+                    }),
+                ],
+            }),
             div({
                 className: "theme-toggler",
                 onClick: toggleBlackMode,

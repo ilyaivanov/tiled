@@ -166,7 +166,7 @@ body.dark .playlist-item:hover {
 /*             */
 
 .navbar {
-    height: 30px;
+    height: 58px;
     position: fixed;
     z-index: 100;
     top: 0;
@@ -181,11 +181,8 @@ body.dark .playlist-item:hover {
     justify-content: center;
     align-items: stretch;
 
-    transition: height 200ms ease-in-out;
-}
-
-.navbar:hover {
-    height: 58px;
+    /* ugly way to compensate for right items in the flexbox with margin-left:auto */
+    padding-left: 150px;
 }
 
 body.dark .navbar {
@@ -233,7 +230,6 @@ body.dark .navbar {
     align-items: center;
     justify-content: center;
 
-    margin-left: auto;
     margin-right: 20px;
 
     padding: 10px;
@@ -267,6 +263,35 @@ body.dark .navbar {
     fill: rgb(156, 156, 156);
 }
 
+.navbar-item + .reset-btn {
+    margin-left: auto;
+}
+
+.reset-btn {
+    align-self: center;
+    margin-right: 20px;
+}
+
+.group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding-bottom: 2px;
+
+    margin-right: 20px;
+}
+
+.group-title {
+    color: rgb(152, 152, 152);
+    font-size: 13px;
+    text-align: center;
+}
+.group-input {
+    width: 30px;
+    text-align: center;
+}
 /*                    */
 /*       Player       */
 /*                    */
