@@ -1,14 +1,15 @@
 import { ctx, fillRect } from "./ui/canvas";
 import { start } from "./ui/framework";
-import { div, img, setElemPosition, setElemSize, span } from "./ui/html";
-import { V2, add, addAll, addScalar, diff, divide, lerp, mult, roundV2, vec } from "./ui/vec";
+import { div, img, input, setElemPosition, setElemSize, span } from "./ui/html";
+import { V2, add, addAll, addScalar, diff, divide, mult, roundV2, vec } from "./ui/vec";
 
 // import { anjunadeep, deepHouse, globalUndergroundItems, xeniaPlaylist } from "./data";
 
 import "./grid.css";
 import { country } from "./data.boards";
-import { play, youtubeIframeId } from "./youtubePlayer";
+import { youtubeIframeId } from "./youtubePlayer";
 import { moonIcon, sunIcon } from "./ui/icons";
+import { playItem } from "./player";
 
 //also defined in CSS
 const headerHeight = 58;
@@ -239,7 +240,7 @@ function ytPlaylist(panel: Panel) {
                                 }),
                                 i.title,
                             ],
-                            onClick: () => play(i.videoId),
+                            onClick: () => playItem(i.videoId, panel),
                         })
                     ),
                 ],
@@ -250,7 +251,7 @@ function ytPlaylist(panel: Panel) {
     return panelEl;
 }
 type Item = { title: string; videoId: string };
-type Panel = {
+export type Panel = {
     title: string;
     gridPos: V2;
     gridSpan: V2;

@@ -11,6 +11,22 @@ type Props<T> = {
     onInput?: (this: HTMLElement, ev: Event & { currentTarget: HTMLElement }) => void;
 };
 
+type InputProps<T> = Props<T> & {
+    onInput?: (this: HTMLElement) => void;
+    from?: number;
+    to?: number;
+    step?: number;
+    type?: string;
+    value?: string;
+};
+
+export const input = (props: InputProps<HTMLInputElement>) => {
+    const res = assignHtmlElementProps(document.createElement("input"), props);
+    if (props.type) res.type = props.type;
+    if (props.value) res.value = props.value;
+    return res;
+};
+
 export const div = (props: Props<HTMLDivElement>) =>
     assignHtmlElementProps(document.createElement("div"), props);
 

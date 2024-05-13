@@ -146,6 +146,8 @@ body.dark .playlist-item:hover {
     padding: 4px 8px;
     font-size: 14px;
     border-bottom: 1px solid rgb(210, 210, 210);
+
+    cursor: pointer;
 }
 
 .playlist-item:hover {
