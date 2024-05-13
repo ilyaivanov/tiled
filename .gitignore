@@ -1,3 +1,4 @@
 node_modules
 build
 src/data.ts
+src/data.boards.ts

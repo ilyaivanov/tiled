@@ -1,26 +1,63 @@
-import { ctx } from "./ui/canvas";
-import { start } from "./ui/framework";
-import { div, img } from "./ui/html";
-import { Point, add, diff, mult, vec } from "./ui/vec";
+import { ctx, fillRect } from "./ui/canvas";
+import { lastTime, start } from "./ui/framework";
+import { div, img, setElemPosition, setElemSize, span } from "./ui/html";
+import { V2, add, addAll, addScalar, diff, divide, lerp, mult, roundV2, vec } from "./ui/vec";
 
 import { anjunadeep, deepHouse, globalUndergroundItems, xeniaPlaylist } from "./data";
 
 import "./grid.css";
+import { country } from "./data.boards";
 
-let shift = vec(0, 0);
+//also defined in CSS
+const headerHeight = 58;
+
 const scale = 1;
 let mouse = { x: 0, y: 0 };
 const cellSize = 100;
 const gap = 10;
+let shift = vec(gap, gap + headerHeight);
 
 let isSpaceDown = false;
+let isBlack = false;
+
 let mousePosMoving = { x: 0, y: 0 };
 let mouseDeltaDuringResize = { x: 0, y: 0 };
-const targetedGrid = { x: 0, y: 0 };
+let panelMovingShadowPos = { x: 0, y: 0 };
 let panelMoving: Panel | undefined = undefined;
 let panelResizing: Panel | undefined = undefined;
 
+const darkColors = {
+    background: "#2f3b50",
+    panel: "#3f4b60",
+    panelPlaceholder: "rgb(10, 30, 40)",
+};
+
+const lightColors = {
+    background: "#F5F5FA",
+    panel: "#FFFFFF",
+    panelPlaceholder: "grey",
+};
+let colors = lightColors;
+
+const gridToAbs = (v: V2) => mult(v, cellSize + gap);
+const absToGrid = (v: V2) => roundV2(divide(v, cellSize + gap));
+
+function toggleBlackMode() {
+    isBlack = !isBlack;
+
+    document.body.classList.toggle("dark", isBlack);
+
+    if (isBlack) colors = darkColors;
+    else colors = lightColors;
+}
+
+if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+    toggleBlackMode();
+}
+
 window.addEventListener("keydown", (e) => {
+    if (e.code == "KeyB" && e.ctrlKey) toggleBlackMode();
+
     if (e.code == "Space") {
         if (!document.body.style.cursor) document.body.style.cursor = "grab";
         isSpaceDown = true;
@@ -67,22 +104,33 @@ window.addEventListener("mousemove", (e) => {
 });
 
 function startMoving(panel: Panel) {
+    showGrid();
     panelMoving = panel;
-    targetedGrid.x = panel.gridX;
-    targetedGrid.y = panel.gridY;
+    panelMovingShadowPos = { ...panel.gridPos };
 
     panel.el.classList.add("panel-grabbing");
     mousePosMoving = { ...mouse };
 }
 
 function onMoving() {
-    if (panelMoving) updatePanel(panelMoving, diff(mouse, mousePosMoving));
+    if (panelMoving) {
+        const snappedGridPosition = absToGrid(
+            diff(add(gridToAbs(panelMoving.gridPos), mouse), mousePosMoving)
+        );
+
+        panelMovingShadowPos = { ...snappedGridPosition };
+
+        setPanelPosition(
+            panelMoving,
+            addAll(diff(mouse, mousePosMoving), shift, gridToAbs(panelMoving.gridPos))
+        );
+    }
 }
 
 function stopMoving() {
     if (panelMoving) {
-        panelMoving.gridX = targetedGrid.x;
-        panelMoving.gridY = targetedGrid.y;
+        hideGrid();
+        panelMoving.gridPos = { ...panelMovingShadowPos };
         panelMoving.el.classList.remove("panel-grabbing");
         updatePanel(panelMoving);
 
@@ -92,13 +140,13 @@ function stopMoving() {
 
 function startResizing(panel: Panel) {
     panelResizing = panel;
-    const panelWidth = (panelResizing.gridX + panelResizing.gridSpanRow) * (cellSize + gap) - gap;
-    const panelHeight = (panelResizing.gridY + panelResizing.gridSpanCol) * (cellSize + gap) - gap;
+    showGrid();
+    const panelBottomRightCorner = addScalar(
+        mult(add(panelResizing.gridPos, panelResizing.gridSpan), cellSize + gap),
+        -gap
+    );
 
-    mouseDeltaDuringResize = {
-        x: panelWidth - mouse.x + shift.x,
-        y: panelHeight - mouse.y + shift.y,
-    };
+    mouseDeltaDuringResize = diff(panelBottomRightCorner, add(mouse, shift));
 
     panel.el.classList.add("panel-resizing");
     onResizing();
@@ -106,20 +154,19 @@ function startResizing(panel: Panel) {
 
 function onResizing() {
     if (panelResizing) {
-        const width =
-            mouse.x + mouseDeltaDuringResize.x - shift.x - panelResizing.gridX * (cellSize + gap);
-        const height =
-            mouse.y + mouseDeltaDuringResize.y - shift.y - panelResizing.gridY * (cellSize + gap);
+        const size = diff(
+            addAll(mouse, mouseDeltaDuringResize, shift),
+            gridToAbs(panelResizing.gridPos)
+        );
 
-        panelResizing.gridSpanRow = Math.round(width / (cellSize + gap));
-        panelResizing.gridSpanCol = Math.round(height / (cellSize + gap));
-        panelResizing.el.style.width = width + "px";
-        panelResizing.el.style.height = height + "px";
+        panelResizing.gridSpan = absToGrid(size);
+        setElemSize(panelResizing.el, size);
     }
 }
 
 function stopResizing() {
     if (panelResizing) {
+        hideGrid();
         panelResizing.el.classList.remove("panel-resizing");
         updatePanel(panelResizing);
 
@@ -127,55 +174,40 @@ function stopResizing() {
     }
 }
 
+let isGridVisible = false;
+function showGrid() {
+    isGridVisible = true;
+}
+function hideGrid() {
+    isGridVisible = false;
+}
+
 function draw() {
-    ctx.fillStyle = "#F5F5FA";
+    ctx.fillStyle = colors.background;
     ctx.fillRect(0, 0, 20000, 20000);
 
-    ctx.fillStyle = "#FCFCFC";
+    if (isGridVisible) {
+        ctx.fillStyle = colors.panel;
 
-    for (let i = -20; i < 20; i++) {
-        for (let j = -20; j < 20; j++) {
-            ctx.fillRect(
-                shift.x + i * (cellSize + gap),
-                shift.y + j * (cellSize + gap),
-                cellSize,
-                cellSize
-            );
+        for (let x = -20; x < 20; x++) {
+            for (let y = -20; y < 20; y++) {
+                const pos = add(shift, gridToAbs({ x, y }));
+                fillRect(pos, vec(cellSize, cellSize));
+            }
         }
     }
 
+    ctx.fillStyle = colors.panelPlaceholder;
     if (panelMoving) {
-        ctx.fillStyle = "#E0E0E0";
-
-        const p = panelMoving ? panelMoving : panelResizing!;
-        const nearestGridX = Math.round(
-            (p.gridX * (cellSize + gap) + mouse.x - mousePosMoving.x) / (cellSize + gap)
-        );
-
-        const nearestGridY = Math.round(
-            (p.gridY * (cellSize + gap) + mouse.y - mousePosMoving.y) / (cellSize + gap)
-        );
-
-        targetedGrid.x = nearestGridX;
-        targetedGrid.y = nearestGridY;
-        ctx.fillRect(
-            shift.x + nearestGridX * (cellSize + gap),
-            shift.y + nearestGridY * (cellSize + gap),
-            p.gridSpanRow * (cellSize + gap) - gap,
-            p.gridSpanCol * (cellSize + gap) - gap
-        );
+        const pos = add(shift, gridToAbs(panelMovingShadowPos));
+        const size = addScalar(gridToAbs(panelMoving.gridSpan), -gap);
+        fillRect(pos, size);
     }
 
     if (panelResizing) {
-        ctx.fillStyle = "#E0E0E0";
-
-        const p = panelResizing;
-        ctx.fillRect(
-            shift.x + p.gridX * (cellSize + gap),
-            shift.y + p.gridY * (cellSize + gap),
-            p.gridSpanRow * (cellSize + gap) - gap,
-            p.gridSpanCol * (cellSize + gap) - gap
-        );
+        const pos = add(shift, gridToAbs(panelResizing.gridPos));
+        const size = addScalar(gridToAbs(panelResizing.gridSpan), -gap);
+        fillRect(pos, size);
     }
 }
 
@@ -214,10 +246,8 @@ function ytPlaylist(panel: Panel) {
 }
 type Panel = {
     title: string;
-    gridX: number;
-    gridY: number;
-    gridSpanRow: number;
-    gridSpanCol: number;
+    gridPos: V2;
+    gridSpan: V2;
     data: typeof xeniaPlaylist;
     el: HTMLElement;
 };
@@ -231,10 +261,8 @@ function panelAt(
     data: typeof xeniaPlaylist
 ) {
     const panel: Panel = {
-        gridX,
-        gridY,
-        gridSpanRow,
-        gridSpanCol,
+        gridPos: vec(gridX, gridY),
+        gridSpan: vec(gridSpanRow, gridSpanCol),
         title,
         data,
         el: undefined!,
@@ -243,28 +271,100 @@ function panelAt(
     return panel;
 }
 
-const panels = [
-    panelAt(1, 1, 4, 4, "Anjunadeep Edition", anjunadeep),
-    panelAt(1, 5, 4, 4, "Xenia UA", xeniaPlaylist),
-    panelAt(5, 5, 3, 4, "Xenia UA", xeniaPlaylist),
-    panelAt(8, 5, 2, 4, "Xenia UA", xeniaPlaylist),
-    panelAt(5, 1, 4, 3, "Deep House", deepHouse),
-    panelAt(9, 1, 4, 3, "Global Underground", globalUndergroundItems),
-];
+let panels: Panel[] = [];
 
-function updatePanel(panel: Panel, s?: Point) {
-    const { gridX, gridY, gridSpanRow, gridSpanCol, el } = panel;
-    Object.assign(el.style, {
-        left: (s?.x || 0) + shift.x + gridX * (cellSize + gap) + "px",
-        top: (s?.y || 0) + shift.y + gridY * (cellSize + gap) + "px",
-        width: gridSpanRow * (cellSize + gap) - gap + "px",
-        height: gridSpanCol * (cellSize + gap) - gap + "px",
-    });
+function loadBoard(title: string) {
+    if (title == "Electro") {
+        panels = [
+            panelAt(0, 0, 4, 4, "Anjunadeep Edition", anjunadeep),
+            panelAt(1, 5, 4, 4, "Xenia UA", xeniaPlaylist),
+            panelAt(5, 5, 3, 4, "Xenia UA", xeniaPlaylist),
+            panelAt(8, 5, 2, 4, "Xenia UA", xeniaPlaylist),
+            panelAt(5, 1, 4, 3, "Deep House", deepHouse),
+            panelAt(9, 1, 4, 3, "Global Underground", globalUndergroundItems),
+        ];
+    } else if (title == "Country") {
+        const panelObjects: Panel[] = [
+            //
+            panelAt(0, 0, 3, 8, "", []),
+            panelAt(3, 0, 3, 2, "", []),
+            panelAt(6, 0, 3, 7, "", []),
+            panelAt(3, 2, 3, 3, "", []),
+        ];
+        panels = country[0].stacks.map((s, i) => {
+            const p = panelObjects[i];
+            p.data = s.items.map((item) => ({ title: item.name, videoId: item.itemId }));
+            p.title = s.name;
+            p.el = ytPlaylist(p);
+            return p;
+        });
+    } else if (title == "Meditation") {
+        const panelObjects: Panel[] = [
+            //
+            panelAt(0, 0, 3, 7, "", []),
+            panelAt(3, 2, 2, 1, "", []),
+            panelAt(3, 0, 2, 2, "", []),
+            panelAt(3, 3, 3, 4, "", []),
+            panelAt(5, 0, 4, 3, "", []),
+        ];
+        panels = country[1].stacks.map((s, i) => {
+            const p = panelObjects[i];
+            p.data = s.items.map((item) => ({ title: item.name, videoId: item.itemId }));
+            p.title = s.name;
+            p.el = ytPlaylist(p);
+            return p;
+        });
+    }
+    rebuildPanels();
+    updatePosition();
+}
+
+function updatePanel(panel: Panel) {
+    setElemSize(panel.el, addScalar(mult(panel.gridSpan, cellSize + gap), -gap));
+    setElemPosition(panel.el, addAll(shift, mult(panel.gridPos, cellSize + gap)));
 }
 
 function updatePosition() {
     for (const panel of panels) updatePanel(panel);
 }
-updatePosition();
 
-for (const { el } of panels) document.body.appendChild(el);
+function rebuildPanels() {
+    for (const el of Array.from(document.getElementsByClassName("panel"))) {
+        console.log(el);
+        el.remove();
+    }
+
+    document.body.append(...panels.map((p) => p.el));
+}
+
+let activeTab: HTMLElement | undefined;
+
+function activate(this: HTMLElement, title: string) {
+    activeTab?.classList.remove("active");
+    activeTab = this;
+    activeTab.classList.add("active");
+    loadBoard(title);
+}
+
+function navbarItem(title: string, isActive = false) {
+    const res = span({
+        className: "navbar-item",
+        onClick: function () {
+            activate.call(this, title);
+        },
+        children: [title],
+    });
+    if (isActive) activate.call(res, title);
+
+    return res;
+}
+
+const tabs = ["Electro", "Country", "Meditation"];
+
+document.body.append(
+    div({
+        className: "navbar",
+        children: tabs.map((t, i) => navbarItem(t, i == 2)),
+    }),
+    ...panels.map((p) => p.el)
+);
