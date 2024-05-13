@@ -1,6 +1,6 @@
 import { ctx, fillRect } from "./ui/canvas";
 import { lastTime, start } from "./ui/framework";
-import { div, img, span } from "./ui/html";
+import { div, img, setElemPosition, setElemSize, span } from "./ui/html";
 import { V2, add, addAll, addScalar, diff, divide, lerp, mult, roundV2, vec } from "./ui/vec";
 
 import { anjunadeep, deepHouse, globalUndergroundItems, xeniaPlaylist } from "./data";
@@ -160,8 +160,7 @@ function onResizing() {
         );
 
         panelResizing.gridSpan = absToGrid(size);
-        panelResizing.el.style.width = size.x + "px";
-        panelResizing.el.style.height = size.y + "px";
+        setElemSize(panelResizing.el, size);
     }
 }
 
@@ -320,23 +319,9 @@ function loadBoard(title: string) {
     updatePosition();
 }
 
-function setPanelPosition(panel: Panel, pos: V2) {
-    Object.assign(panel.el.style, {
-        left: pos.x + "px",
-        top: pos.y + "px",
-    });
-}
-
-function setPanelSize(panel: Panel, size: V2) {
-    Object.assign(panel.el.style, {
-        width: size.x + "px",
-        height: size.y + "px",
-    });
-}
-
 function updatePanel(panel: Panel) {
-    setPanelSize(panel, addScalar(mult(panel.gridSpan, cellSize + gap), -gap));
-    setPanelPosition(panel, addAll(shift, mult(panel.gridPos, cellSize + gap)));
+    setElemSize(panel.el, addScalar(mult(panel.gridSpan, cellSize + gap), -gap));
+    setElemPosition(panel.el, addAll(shift, mult(panel.gridPos, cellSize + gap)));
 }
 
 function updatePosition() {

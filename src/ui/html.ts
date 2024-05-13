@@ -1,3 +1,5 @@
+import { V2 } from "./vec";
+
 type Props<T> = {
     id?: string;
     className?: string;
@@ -66,3 +68,17 @@ function assignHtmlElementProps<T extends HTMLElement>(elem: T, props: Props<T>)
 export const insertAfter = (elem: HTMLElement, elemToInsert: HTMLElement) => {
     elem.insertAdjacentElement("afterend", elemToInsert);
 };
+
+export function setElemPosition(elem: HTMLElement, pos: V2) {
+    Object.assign(elem.style, {
+        left: pos.x + "px",
+        top: pos.y + "px",
+    });
+}
+
+export function setElemSize(elem: HTMLElement, size: V2) {
+    Object.assign(elem.style, {
+        width: size.x + "px",
+        height: size.y + "px",
+    });
+}
