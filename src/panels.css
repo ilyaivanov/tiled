@@ -1,0 +1,103 @@
+.panel-resizing {
+    opacity: 0.5;
+}
+
+.playlist-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    border-bottom: 1px solid rgb(210, 210, 210);
+
+    cursor: pointer;
+}
+
+body.dark .playlist-item {
+    border-bottom-color: rgb(80, 80, 80);
+}
+
+.playlist-item:hover {
+    background-color: rgb(234, 234, 234);
+}
+
+.playlist-item-image {
+    width: 66px;
+    height: 48px;
+    object-fit: cover;
+}
+
+.playlist-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: bold;
+    /* text-align: center; */
+    /* padding: 4px; */
+    border-bottom: 1px solid rgb(226, 226, 226);
+    cursor: grab;
+
+    transition: background-color 200ms ease-in-out;
+}
+
+body.dark .playlist-title {
+    border-bottom: 1px solid rgb(89, 89, 89);
+}
+body.dark .playlist-item {
+    border-bottom: 1px solid rgb(89, 89, 89);
+}
+body.dark .playlist-title:hover {
+    background-color: rgb(53, 53, 53);
+}
+body.dark .playlist-item:hover {
+    background-color: rgb(53, 53, 53);
+}
+
+.panel-grabbing .playlist-title {
+    cursor: grabbing;
+}
+.playlist-title:hover {
+    background-color: rgb(237, 237, 237);
+}
+
+.playlist-title-image {
+    width: 50px;
+    user-drag: none;
+    -webkit-user-drag: none;
+}
+
+.playlist-item-year {
+    color: grey;
+    font-size: 12px;
+    text-align: right;
+    min-width: 30px;
+}
+
+.playlist-track-container {
+    border-bottom: 1px solid rgb(226, 226, 226);
+}
+
+.playlist-track {
+    display: flex;
+    align-items: baseline;
+    font-size: 13px;
+    padding: 2px 0px 2px 0px;
+}
+
+.playlist-track:hover {
+    background-color: rgb(207, 220, 224);
+}
+
+.playlist-track-time {
+    font-size: 12px;
+    color: grey;
+    margin-left: auto;
+    margin-right: 8px;
+}
+
+.playlist-track-number {
+    font-size: 12px;
+    min-width: 20px;
+    text-align: right;
+    margin-right: 6px;
+    color: grey;
+}

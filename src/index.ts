@@ -1,15 +1,10 @@
 import { ctx, fillRect } from "./ui/canvas";
 import { lastTime, start } from "./ui/framework";
-import { div, img, input, setElemPosition, setElemSize, span } from "./ui/html";
+import { div, input, setElemPosition, setElemSize, span } from "./ui/html";
 import { V2, add, addAll, addScalar, diff, divide, mult, roundV2, vec } from "./ui/vec";
-
-// import { anjunadeep, deepHouse, globalUndergroundItems, xeniaPlaylist } from "./data";
-
 import "./grid.css";
-import { country } from "./data.boards";
 import { youtubeIframeId } from "./youtubePlayer";
 import { moonIcon, sunIcon } from "./ui/icons";
-import { playItem } from "./player";
 import {
     getGridProps,
     getIsDark,
@@ -22,6 +17,8 @@ import {
     setIsDark,
     setSelectedBoard,
 } from "./localStorage";
+import { Board, boards } from "./data.new";
+import { ytPlaylist } from "./panels";
 
 //also defined in CSS
 const headerHeight = 58;
@@ -44,7 +41,7 @@ let panelMoving: Panel | undefined = undefined;
 let panelResizing: Panel | undefined = undefined;
 
 const darkColors = {
-    background: "#2f3b50",
+    background: "#000000",
     panel: "#3f4b60",
     panelPlaceholder: "rgb(10, 30, 40)",
 };
@@ -74,6 +71,7 @@ function applyTheme() {
         themeToggler.replaceChildren(sunIcon());
     } else {
         colors = lightColors;
+
         themeToggler.replaceChildren(moonIcon());
     }
 }
@@ -131,7 +129,7 @@ window.addEventListener("mousemove", (e) => {
     onResizing();
 });
 
-function startMoving(panel: Panel) {
+export function startMoving(panel: Panel) {
     showGrid();
     panelMoving = panel;
     panelMovingShadowPos = { ...panel.gridPos };
@@ -167,7 +165,7 @@ function stopMoving() {
     }
 }
 
-function startResizing(panel: Panel) {
+export function startResizing(panel: Panel) {
     panelResizing = panel;
     showGrid();
     const panelBottomRightCorner = addScalar(
@@ -248,40 +246,24 @@ function draw() {
 
 start({ draw });
 
-function ytPlaylist(panel: Panel) {
-    const panelEl = div({
-        className: "panel",
-        children: [
-            div({
-                className: "playlist-title",
-                children: [panel.title],
-                onMouseDown: () => startMoving(panel),
-            }),
-            div({
-                className: "panel-body",
-                children: [
-                    ...panel.data.map((i) =>
-                        div({
-                            className: "playlist-item",
-                            children: [
-                                img({
-                                    className: "playlist-item-image",
-                                    src: `https://i.ytimg.com/vi/${i.videoId}/mqdefault.jpg`,
-                                }),
-                                i.title,
-                            ],
-                            onClick: () => playItem(i.videoId, panel),
-                        })
-                    ),
-                ],
-            }),
-            div({ className: "panel-dragger", onMouseDown: () => startResizing(panel) }),
-        ],
-    });
-    return panelEl;
-}
-type Item = { title: string; videoId: string };
+export type Track = {
+    title: string;
+    time: string;
+    videoId: string;
+    channelId?: string;
+    channelName?: string;
+};
+
+export type Item = {
+    year?: number;
+    title: string;
+    videoId: string;
+    channelId: string;
+    channelName: string;
+    tracks?: Track[];
+};
 export type Panel = {
+    image?: string;
     title: string;
     gridPos: V2;
     gridSpan: V2;
@@ -311,61 +293,25 @@ function panelAt(
 let boardName: string = getSelectedBoard() || "Country";
 let panels: Panel[] = [];
 
-function loadBoard(title: string) {
-    boardName = title;
-    setSelectedBoard(title);
-    shift = getOffset(title) || vec((window.innerWidth - 1000) / 2, gap + headerHeight);
-    if (title == "Country") {
-        let panelObjects = loadPanelStateForBoard(title);
-        if (!panelObjects)
-            panelObjects = [
-                panelAt(0, 0, 3, 8, "", []),
-                panelAt(3, 0, 3, 2, "", []),
-                panelAt(6, 0, 3, 7, "", []),
-                panelAt(3, 2, 3, 3, "", []),
-            ];
+function loadBoard(board: Board) {
+    boardName = board.title;
+    setSelectedBoard(board.title);
+    shift = getOffset(board.title) || vec((window.innerWidth - 1000) / 2, gap + headerHeight);
 
-        panels = country[0].panels.map((s, i) => {
-            const p = panelObjects[i];
-            p.data = s.items.map((item) => ({ title: item.name, videoId: item.videoId }));
-            p.title = s.name;
-            p.el = ytPlaylist(p);
-            return p;
-        });
-    } else if (title == "Meditation") {
-        let panelObjects = loadPanelStateForBoard(title);
-        if (!panelObjects)
-            panelObjects = [
-                panelAt(0, 0, 3, 7, "", []),
-                panelAt(3, 2, 2, 1, "", []),
-                panelAt(3, 0, 2, 2, "", []),
-                panelAt(3, 3, 3, 4, "", []),
-                panelAt(5, 0, 4, 3, "", []),
-            ];
-        panels = country[1].panels.map((s, i) => {
-            const p = panelObjects[i];
-            p.data = s.items.map((item) => ({ title: item.name, videoId: item.videoId }));
-            p.title = s.name;
-            p.el = ytPlaylist(p);
-            return p;
-        });
-    } else if (title == "Blues") {
-        let panelObjects = loadPanelStateForBoard(title);
-        if (!panelObjects)
-            panelObjects = [
-                panelAt(0, 0, 2, 2, "", []),
-                panelAt(4, 0, 2, 2, "", []),
-                panelAt(0, 2, 2, 2, "", []),
-                panelAt(2, 0, 2, 2, "", []),
-            ];
-        panels = country[2].panels.map((s, i) => {
-            const p = panelObjects[i];
-            p.data = s.items.map((item) => ({ title: item.name, videoId: item.videoId }));
-            p.title = s.name;
-            p.el = ytPlaylist(p);
-            return p;
-        });
+    const savedProps = loadPanelStateForBoard(board.title) || [];
+
+    for (const panel of board.panels) {
+        const savedPanel = savedProps.find((p) => p.title == panel.title);
+        if (savedPanel) {
+            panel.gridPos = savedPanel.gridPos;
+            panel.gridSpan = savedPanel.gridSpan;
+        }
     }
+
+    panels = board.panels.map((s, i) => {
+        s.el = ytPlaylist(s);
+        return s;
+    });
     rebuildPanels();
     updatePosition();
 }
@@ -390,29 +336,23 @@ function rebuildPanels() {
 
 let activeTab: HTMLElement | undefined;
 
-function activate(this: HTMLElement, title: string) {
+const boardTabs = new WeakMap<Board, HTMLElement>();
+
+function activate(board: Board) {
     activeTab?.classList.remove("active");
-    activeTab = this;
-    activeTab.classList.add("active");
-    loadBoard(title);
+    activeTab = boardTabs.get(board);
+    activeTab?.classList.add("active");
+    loadBoard(board);
 }
 
-function navbarItem(title: string) {
-    const res = span({
+function navbarItem(board: Board) {
+    return span({
         className: "navbar-item",
-        onClick: function () {
-            activate.call(this, title);
-        },
-        children: [title],
+        onClick: () => activate(board),
+        ref: (ref) => boardTabs.set(board, ref),
+        children: [board.title],
     });
-
-    //ugly, but runs only once during initial render
-    if (title == boardName) activate.call(res, title);
-
-    return res;
 }
-
-const tabs = ["Country", "Meditation", "Blues"];
 
 let gridSizeEl: HTMLInputElement;
 let gridGapEl: HTMLInputElement;
@@ -438,7 +378,7 @@ document.body.append(
     div({
         className: "navbar",
         children: [
-            ...tabs.map(navbarItem),
+            ...boards.map(navbarItem),
             input({
                 className: "reset-btn",
                 type: "button",
@@ -451,7 +391,7 @@ document.body.append(
             div({
                 className: "group",
                 children: [
-                    div({ className: "group-title", children: ["Grid size"] }),
+                    div({ className: "group-title", children: ["Grid gap"] }),
                     div({
                         className: "group-controls",
                         children: [
@@ -482,7 +422,7 @@ document.body.append(
             div({
                 className: "group",
                 children: [
-                    div({ className: "group-title", children: ["Grid gap"] }),
+                    div({ className: "group-title", children: ["Grid size"] }),
                     div({
                         className: "group-controls",
                         children: [
@@ -529,3 +469,6 @@ if (
 ) {
     toggleBlackMode();
 } else if (savedIsDark) toggleBlackMode();
+else applyTheme();
+
+activate(boards[0]);
