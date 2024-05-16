@@ -258,11 +258,14 @@ export type Item = {
     year?: number;
     title: string;
     videoId: string;
+    image?: string;
+    playlistId?: string;
     channelId: string;
     channelName: string;
     tracks?: Track[];
 };
 export type Panel = {
+    isYoutubePlaylist?: boolean;
     image?: string;
     title: string;
     gridPos: V2;
@@ -461,6 +464,23 @@ document.body.append(
     ...panels.map((p) => p.el)
 );
 
+export function insertPanel(newPanel: Panel) {
+    panels.push(newPanel);
+
+    if (newPanel.el) newPanel.el.remove();
+
+    newPanel.el = ytPlaylist(newPanel);
+    document.body.append(newPanel.el);
+    updatePanel(newPanel);
+    newPanel.el.animate(
+        [
+            { opacity: 0, translate: "-10px 0px" },
+            { opacity: 1, translate: "0px 0px" },
+        ],
+        { duration: 200, easing: "ease-in" }
+    );
+}
+
 const savedIsDark = getIsDark();
 if (
     typeof savedIsDark == "undefined" &&
@@ -471,4 +491,9 @@ if (
 } else if (savedIsDark) toggleBlackMode();
 else applyTheme();
 
-activate(boards[0]);
+const boardToActivate = getSelectedBoard();
+if (boardToActivate) {
+    const b = boards.find((b) => b.title == boardToActivate);
+    if (b) activate(b);
+    else activate(boards[0]);
+} else activate(boards[0]);

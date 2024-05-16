@@ -12,6 +12,27 @@
     cursor: pointer;
 }
 
+.playlist-youtube-title {
+    position: relative;
+    aspect-ratio: 16/9;
+    /* height: 140px; */
+    /* background-image: url(https://i.ytimg.com/vi/9W6yT2sZN8g/mqdefault.jpg); */
+    background-size: cover;
+    background-position: 50% 50%;
+}
+
+.playlist-youtube-title {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+}
+
+.playlist-youtube-title-text {
+    padding: 4px;
+    background-color: rgba(0, 0, 0, 0.4);
+    color: white;
+}
+
 body.dark .playlist-item {
     border-bottom-color: rgb(80, 80, 80);
 }
@@ -22,6 +43,7 @@ body.dark .playlist-item {
 
 .playlist-item-image {
     width: 66px;
+    min-width: 66px;
     height: 48px;
     object-fit: cover;
 }
