@@ -25,6 +25,14 @@ export function add(p1: V2, p2: V2) {
     return { x: p1.x + p2.x, y: p1.y + p2.y };
 }
 
+export function addY(p1: V2, v: number) {
+    return { x: p1.x, y: p1.y + v };
+}
+
+export function addX(p1: V2, v: number) {
+    return { x: p1.x + v, y: p1.y };
+}
+
 export function addScalar(p1: V2, v: number) {
     return { x: p1.x + v, y: p1.y + v };
 }

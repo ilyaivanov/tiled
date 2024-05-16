@@ -4,6 +4,7 @@ type Props<T> = {
     id?: string;
     className?: string;
     classMap?: { [key: string]: boolean };
+    style?: {};
     children?: (DocumentFragment | HTMLElement | string | undefined | false)[];
     ref?: (elem: T) => void;
     onClick?: (this: HTMLElement, mouse: MouseEvent) => void;
@@ -60,6 +61,8 @@ function assignHtmlElementProps<T extends HTMLElement>(elem: T, props: Props<T>)
     if (props.id) elem.id = props.id;
 
     if (props.className) elem.className = props.className;
+
+    if (props.style) Object.assign(elem.style, props.style);
 
     if (props.classMap) {
         for (const classKey in props.classMap) {
