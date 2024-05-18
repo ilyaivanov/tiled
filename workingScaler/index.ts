@@ -132,53 +132,10 @@ function draw() {
     ctx.strokeStyle = "hsl(0, 100%, 60%)";
     ctx.strokeRect(0, 0, screenWidth, screenHeight);
 
-    // for (let i = 0; i < 360; i++) {
-    //     ctx.fillStyle = `hsl(${i} 100% 50%)`;
-    //     fillRect(200, 200 + i, 400, window.devicePixelRatio);
-    // }
-
     ctx.fillStyle = "white";
     ctx.fillRect(screenWidth - 200, 100, 100, 100);
 
-    // ctx.fillStyle = "white";
-    // ctx.fillRect(screen.x - elWidth - 100, elHeight + 200, 100, 100);
-
-    // if (loaded) {
-    //     ctx.drawImage(img1, 800, 20);
-    // }
-
     requestAnimationFrame(draw);
 }
-
-// function drawCanvas() {
-//     ctx.setTransform(1, 0, 0, 1, 0, 0);
-//     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-//     ctx.scale(baseScale, baseScale);
-//     ctx.translate(pos.x, pos.y);
-//     ctx.scale(scale, scale);
-
-//     const squareSize = 50;
-//     const gap = 10;
-//     for (let x = -50; x < 50; x++) {
-//         for (let y = -50; y < 50; y++) {
-//             let color = "hsl(0, 50%, 60%)";
-//             if ((x + y) % 5 == 0) color = "hsl(40, 50%, 60%)";
-//             else if ((x + y) % 15 == 0) color = "hsl(80, 50%, 60%)";
-//             else if ((x + y) % 2 == 0) color = "hsl(120, 50%, 60%)";
-
-//             ctx.fillStyle = color;
-
-//             const step = squareSize + gap;
-//             ctx.fillRect(x * step, y * step, squareSize, squareSize);
-//         }
-//     }
-
-//     ctx.font = "36px Segoe UI";
-//     ctx.fillStyle = "black";
-//     ctx.fillText("Hello there from heaven", 200, 200);
-
-//     requestAnimationFrame(drawCanvas);
-// }
 
 requestAnimationFrame(draw);
