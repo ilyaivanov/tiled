@@ -37,26 +37,24 @@ window.addEventListener("mousemove", (e) => {
 
     const isPrimaryButtonDown = e.buttons & 1;
     if (isSpaceDown && isPrimaryButtonDown) {
-        const shiftDelta = diff(newMousePos, mouse);
+        const shiftDelta = diff(mouse, newMousePos);
         shift = add(shift, shiftDelta);
         assignAstyles();
+        console.log(newMousePos.x, shift);
     }
-    console.log(newMousePos.x, shift);
 
     mouse = newMousePos;
 });
 
 function scaleTo(newScale: number) {
     newScale = Math.max(newScale, 0.05);
+    const focal = vec(screen.x / 2, screen.y / 2);
 
-    // - shift.x * scale
-    const focal = { x: mouse.x, y: mouse.y };
+    let newShift = add(shift, mult(focal, scale));
+    newShift = diff(shift, mult(focal, newScale));
 
-    const newShift = add(shift, mult(focal, scale - newScale));
-
-    console.log(shift.x, newShift.x, scale, newScale);
-    // shift = vec(newShift.x, newShift.y);
-    shift = newShift;
+    // console.log(`scale: ${scale} => ${newScale}; shift.x: ${shift.x} => ${newShift.x}`);
+    // shift = newShift;
     scale = newScale;
 
     assignAstyles();
@@ -81,7 +79,7 @@ document.addEventListener(
 
         if (e.ctrlKey) scaleTo(scale - e.deltaY / 300);
         else {
-            shift = addY(shift, -e.deltaY);
+            shift = addY(shift, e.deltaY);
             assignAstyles();
         }
         e.preventDefault();
@@ -94,8 +92,8 @@ const el = div({ className: "foo", children: [img1, "My Awesome Title"] });
 const elWidth = 484;
 const elHeight = 396;
 function assignAstyles() {
-    const startingPos = vec(screen.x - elWidth - 100, 200);
-    const pos = add(mult(startingPos, scale), shift);
+    const startingPos = vec(screen.x - elWidth, 200);
+    const pos = add(mult(startingPos, scale), mult(shift, -1));
 
     Object.assign(el.style, {
         left: pos.x.toFixed(1) + "px",
@@ -104,7 +102,7 @@ function assignAstyles() {
         transformOrigin: "top left",
     });
 }
-document.body.appendChild(el);
+// document.body.appendChild(el);
 assignAstyles();
 
 // function strokeRect(x: number, y: number, w: number, h: number) {
@@ -130,8 +128,8 @@ function draw() {
     fillRect(diff(mouse, vec(5, 5)), vec(10, 10));
 
     ctx.save();
-    ctx.translate(shift.x, shift.y);
     ctx.scale(scale, scale);
+    ctx.translate(-shift.x, -shift.y);
 
     ctx.fillStyle = "white";
     ctx.fillRect(screen.x / 2, 0, 2, 2000);
