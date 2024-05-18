@@ -1,0 +1,35 @@
+body {
+    overflow: hidden;
+    margin: 0;
+    background-color: black;
+}
+
+.foo {
+    box-sizing: border-box;
+    position: fixed;
+
+    background-color: black;
+    color: white;
+
+    display: flex;
+    flex-direction: column;
+
+    font-family: "Segoe UI";
+    font-size: 24px;
+    font-weight: bold;
+
+    border: 2px solid grey;
+}
+
+img {
+    -webkit-user-drag: none;
+}
+.foo-footer {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 15px;
+}
+.foo-footer > div:hover {
+    background-color: hsl(0, 50%, 50%);
+}
