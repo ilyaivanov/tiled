@@ -1,6 +1,6 @@
 // import { canvas, ctx } from "../src/ui/canvas";
 import { div } from "../src/ui/html";
-import { V2, diff, mult, vec } from "../src/ui/vec";
+import { V2, add, diff, mult, vec } from "../src/ui/vec";
 import "./index.css";
 
 var img1 = new Image();
@@ -13,7 +13,6 @@ const el = div({
         div({
             className: "foo-footer",
             children: [
-                //
                 div({ children: ["One"] }),
                 div({ children: ["Two"] }),
                 div({ children: ["Three"] }),
@@ -53,7 +52,7 @@ function onResize() {
 onResize();
 
 window.addEventListener("resize", onResize);
-assignAstyles();
+updateElements();
 
 document.addEventListener(
     "mousewheel",
@@ -77,28 +76,26 @@ window.addEventListener("mousemove", (e) => {
 
     const isPrimaryButtonDown = e.buttons & 1;
     if (isPrimaryButtonDown) {
-        pos.x += newMousePos.x - mouse.x;
-        pos.y += newMousePos.y - mouse.y;
+        pos = add(pos, diff(newMousePos, mouse));
 
-        console.log(pos);
-        assignAstyles();
+        updateElements();
     }
 
     mouse = newMousePos;
 });
 
-function scaleBy(at: V2, amount: number) {
-    setScale(at, scale * amount);
+function scaleBy(focal: V2, amount: number) {
+    setScale(focal, scale * amount);
 
-    assignAstyles();
+    updateElements();
 }
 
-function setScale(at: V2, newScale: number) {
-    pos.x = at.x - (at.x - pos.x) * (newScale / scale);
-    pos.y = at.y - (at.y - pos.y) * (newScale / scale);
+function setScale(focal: V2, newScale: number) {
+    pos = diff(focal, mult(diff(focal, pos), newScale / scale));
+
     scale = newScale;
 
-    assignAstyles();
+    updateElements();
 }
 
 //
@@ -106,8 +103,7 @@ function setScale(at: V2, newScale: number) {
 //
 //
 
-function assignAstyles() {
-    console.log(panelX + pos.x.toFixed(1) + "px", scale.toFixed(3));
+function updateElements() {
     Object.assign(el.style, {
         left: (panelX + pos.x).toFixed(1) + "px",
         top: (panelY + pos.y).toFixed(1) + "px",
