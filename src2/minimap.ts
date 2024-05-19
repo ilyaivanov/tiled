@@ -1,7 +1,8 @@
-import { fillRect } from "../src/ui/canvas";
-import { add, diffScalar, mult } from "../src/ui/vec";
+import { diffScalar, mult } from "../src/ui/vec";
 import { GRID_GAP, GRID_SIZE, pos, scale } from "./index";
 import { panels } from "./panel";
+
+import "./minimap.css";
 
 const canvas = document.createElement("canvas");
 canvas.className = "minimap";
@@ -26,7 +27,7 @@ function onResize() {
 onResize();
 
 const minimapSize = 300;
-const minimapScale = 50;
+const minimapScale = 35;
 export function drawMinimap() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -40,7 +41,10 @@ export function drawMinimap() {
         ctx.fillStyle = "hsl(0, 40%, 40%)";
         const panelPos = mult(mult(panel.gridPos, step), 1 / minimapScale);
 
-        const panelSize = mult(diffScalar(mult(panel.gridSpan, step), GRID_GAP), 1 / minimapScale);
+        const panelSize = mult(
+            diffScalar(mult(panel.gridSpan, step), GRID_GAP),
+            1 / minimapScale
+        );
 
         ctx.fillRect(
             minimapSize / 2 + panelPos.x,
@@ -53,7 +57,10 @@ export function drawMinimap() {
     ctx.fillStyle = "rgba(200, 200, 200, 0.3)";
     ctx.fillRect(
         minimapSize / 2 - pos.x / minimapScale / scale,
-        screenHeight - minimapSize + minimapSize / 2 - pos.y / minimapScale / scale,
+        screenHeight -
+            minimapSize +
+            minimapSize / 2 -
+            pos.y / minimapScale / scale,
         screenWidth / minimapScale / scale,
         screenHeight / minimapScale / scale
     );

@@ -1,5 +1,13 @@
 import { V2, add, diff, mult, vec } from "../src/ui/vec";
-import { onMouseMove, panels, updatePanels } from "./panel";
+import {
+    movePanel,
+    onPanelResizing,
+    panelDragging,
+    panelMovingShadowPos,
+    panelResizing,
+    panels,
+    updatePanels,
+} from "./panel";
 
 import "./index.css";
 import { drawMinimap, minimapCanvas } from "./minimap";
@@ -13,7 +21,7 @@ let baseScale = window.devicePixelRatio || 1;
 
 export let mouse = vec(0, 0);
 export let scale = 1;
-export let pos = { x: 0, y: 0 };
+export let pos = vec(-200, -200);
 
 export const GRID_SIZE = 100;
 export const GRID_GAP = 10;
@@ -39,7 +47,7 @@ document.body.appendChild(minimapCanvas);
 
 updatePanels();
 
-let isSpaceDown = false;
+export let isSpaceDown = false;
 window.addEventListener("keydown", (e) => {
     if (e.code == "Space") {
         if (!document.body.style.cursor) document.body.style.cursor = "grab";
@@ -67,17 +75,23 @@ window.addEventListener("mouseup", (e) => {
 
 document.addEventListener(
     "mousewheel",
-    function onmousewheel(event: Event) {
-        var e = event as WheelEvent;
-        const scaleFactor = 1.3;
-        const newScale = e.deltaY > 0 ? 1 / scaleFactor : scaleFactor;
-        scaleBy(vec(e.clientX, e.clientY), newScale);
-        e.preventDefault();
-    },
+    function onmousewheel(e: WheelEvent) {
+        if (e.ctrlKey) {
+            const scaleFactor = 1.3;
+            const newScale = e.deltaY > 0 ? 1 / scaleFactor : scaleFactor;
+            scaleBy(vec(e.clientX, e.clientY), newScale);
+            e.preventDefault();
+        } else {
+            pos.y -= e.deltaY;
+            updatePanels();
+        }
+    } as any,
     { passive: false }
 );
 
-document.addEventListener("dblclick", (e: MouseEvent) => setScale(vec(e.clientX, e.clientY), 1));
+document.addEventListener("dblclick", (e: MouseEvent) =>
+    setScale(vec(e.clientX, e.clientY), 1)
+);
 
 window.addEventListener("mousemove", (e) => {
     const newMousePos = { x: e.clientX, y: e.clientY };
@@ -90,8 +104,9 @@ window.addEventListener("mousemove", (e) => {
         updatePanels();
     }
 
-    onMouseMove(delta);
+    movePanel(delta);
 
+    onPanelResizing(delta);
     mouse = newMousePos;
 });
 
@@ -116,7 +131,7 @@ function setScale(focal: V2, newScale: number) {
 
 function draw() {
     ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.fillStyle = "black";
+    ctx.fillStyle = "rgb(235, 237, 238)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     ctx.scale(baseScale, baseScale);
@@ -124,11 +139,31 @@ function draw() {
     ctx.scale(scale, scale);
 
     const step = GRID_SIZE + GRID_GAP;
-    ctx.fillStyle = "hsl(20 10% 10%)";
+    ctx.fillStyle = "rgb(225, 227, 228)";
     for (let x = -20; x < 20; x++) {
         for (let y = -20; y < 20; y++) {
             ctx.fillRect(x * step, y * step, GRID_SIZE, GRID_SIZE);
         }
+    }
+
+    if (panelDragging) {
+        ctx.fillStyle = "hsl(120 10% 80%)";
+        ctx.fillRect(
+            panelMovingShadowPos.x * step,
+            panelMovingShadowPos.y * step,
+            panelDragging.gridSpan.x * step - GRID_GAP,
+            panelDragging.gridSpan.y * step - GRID_GAP
+        );
+    }
+
+    if (panelResizing) {
+        ctx.fillStyle = "hsl(120 10% 80%)";
+        ctx.fillRect(
+            panelResizing.gridPos.x * step,
+            panelResizing.gridPos.y * step,
+            panelResizing.gridSpan.x * step - GRID_GAP,
+            panelResizing.gridSpan.y * step - GRID_GAP
+        );
     }
 
     drawMinimap();
