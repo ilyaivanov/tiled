@@ -21,6 +21,10 @@ export function diff(p1: V2, p2: V2) {
     return { x: p1.x - p2.x, y: p1.y - p2.y };
 }
 
+export function diffScalar(p1: V2, v: number) {
+    return { x: p1.x - v, y: p1.y - v };
+}
+
 export function add(p1: V2, p2: V2) {
     return { x: p1.x + p2.x, y: p1.y + p2.y };
 }

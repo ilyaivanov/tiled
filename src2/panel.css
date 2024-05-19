@@ -1,0 +1,9 @@
+.panel {
+    position: fixed;
+    background-color: hsl(0, 17%, 37%);
+    transform-origin: top left;
+}
+
+.panel:hover {
+    background-color: hsl(0, 25%, 46%);
+}
