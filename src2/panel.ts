@@ -3,7 +3,7 @@ import {
     foldingIdeasPlaylists,
     greatFilter,
     kurzgesagtPlaylist,
-} from "../src/data.yt";
+} from "../src/d.yt";
 import { div, img, setElemPosition, setElemSize } from "../src/ui/html";
 import {
     V2,
