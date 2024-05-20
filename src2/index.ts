@@ -88,7 +88,7 @@ document.addEventListener(
             );
 
             if (!(panel && panel.scrollHeight > panel.clientHeight)) {
-                pos.y -= Math.sign(e.deltaY) * (GRID_SIZE + GRID_GAP);
+                pos.y -= e.deltaY;
                 updatePanels();
             }
         }
