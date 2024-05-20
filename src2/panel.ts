@@ -1,4 +1,10 @@
-import { div, setElemPosition, setElemSize } from "../src/ui/html";
+import { boardElectro } from "../src/data.electro";
+import {
+    foldingIdeasPlaylists,
+    greatFilter,
+    kurzgesagtPlaylist,
+} from "../src/data.yt";
+import { div, img, setElemPosition, setElemSize } from "../src/ui/html";
 import {
     V2,
     add,
@@ -38,6 +44,7 @@ export const absToGrid2 = (v: V2) => roundV2(divide(v, GRID_SIZE + GRID_GAP));
 function startMovingPanel(e: Event, panel: Panel) {
     if (!isSpaceDown) {
         panelDragging = panel;
+        panelDragging.el.classList.add("panel-repositioned");
         //to set position of the shadow elem
         movePanel(vec(0, 0));
         e.stopPropagation();
@@ -69,6 +76,7 @@ export function movePanel(delta: V2) {
 
 function endMovingPanel() {
     if (panelDragging) {
+        panelDragging.el.classList.remove("panel-repositioned");
         panelDragging.gridPos = { ...panelMovingShadowPos };
         panelDragging = undefined;
         panelMovingShadowPos = vec(0, 0);
@@ -81,6 +89,7 @@ function endMovingPanel() {
 
 function onPanelStartResize(e: MouseEvent, panel: Panel) {
     panelResizing = panel;
+    panelResizing.el.classList.add("panel-repositioned");
     const panelBottomRightCorner = addScalar(
         mult(
             add(panelResizing.gridPos, panelResizing.gridSpan),
@@ -111,6 +120,7 @@ export function onPanelResizing(delta: V2) {
 }
 function onPanelEndResize() {
     if (panelResizing) {
+        panelResizing.el.classList.remove("panel-repositioned");
         panelResizing = undefined;
         updatePanels();
     }
@@ -118,7 +128,24 @@ function onPanelEndResize() {
 
 document.addEventListener("mouseup", endMovingPanel);
 
-const panelAt = (gridPos: V2, gridSpan: V2) => {
+type PanelProps = {
+    type: "channel" | "playlist";
+    image: string;
+    title: string;
+    items?: { image: string; title: string }[];
+};
+
+function panelTabButton(title: string) {
+    const res = div({
+        className: "panel-tab",
+        children: [title],
+        onMouseDown: (e) => e.stopPropagation(),
+        onClick: () => res.classList.toggle("active"),
+    });
+    return res;
+}
+
+const panelAt = (gridPos: V2, gridSpan: V2, props: PanelProps) => {
     const res: Panel = {
         gridPos,
         gridSpan,
@@ -126,6 +153,45 @@ const panelAt = (gridPos: V2, gridSpan: V2) => {
             className: "panel",
             onMouseDown: (e) => startMovingPanel(e, res),
             children: [
+                props.type == "playlist"
+                    ? div({
+                          className: "playlist-youtube-title",
+                          style: { backgroundImage: `url(${props.image})` },
+                          children: [
+                              div({
+                                  className: "playlist-youtube-title-text",
+                                  children: [props.title],
+                              }),
+                          ],
+                      })
+                    : div({
+                          className: "panel-title",
+                          children: [
+                              img({
+                                  className: "panel-title-channel-image",
+                                  src: props.image,
+                              }),
+                              props.title,
+                          ],
+                      }),
+                props.type == "channel" &&
+                    div({
+                        className: "panel-tabs",
+                        children: [
+                            panelTabButton("Videos"),
+                            panelTabButton("Playlists"),
+                        ],
+                    }),
+                div({
+                    className: "panel-body",
+                    onMouseDown: (e) => e.stopPropagation(),
+                    children: props.items?.map((p) =>
+                        div({
+                            className: "panel-item",
+                            children: [img({ src: p.image }), p.title],
+                        })
+                    ),
+                }),
                 div({
                     className: "panel-dragger",
                     onMouseDown: (e) => onPanelStartResize(e, res),
@@ -137,9 +203,63 @@ const panelAt = (gridPos: V2, gridSpan: V2) => {
 };
 
 export let panels: Panel[] = [
-    panelAt(vec(2, 2), vec(2, 2)),
-    panelAt(vec(4, 2), vec(2, 4)),
-    panelAt(vec(6, 2), vec(2, 6)),
+    panelAt(vec(2, 2), vec(2, 2), {
+        type: "channel",
+        image: "https://yt3.googleusercontent.com/ytc/AIdro_mpYedipdXUXCKkwjQEeFrepFlDHZ0LiczqWeKyG0YmJvA=s176-c-k-c0x00ffffff-no-rj",
+        title: "Vsauce",
+    }),
+    panelAt(vec(2, 6), vec(2, 4), {
+        type: "channel",
+        image: "https://yt3.googleusercontent.com/ytc/AIdro_nVQf8Psqlpa_dTYOWy0WESNzpzzJDUUv2LhGEMt8jQrvs=s176-c-k-c0x00ffffff-no-rj",
+        title: "Kurzgesagt – In a Nutshell",
+        items: kurzgesagtPlaylist.map((p) => ({
+            title: p.snippet.title,
+            image: p.snippet.thumbnails.medium.url,
+        })),
+    }),
+    panelAt(vec(4, 6), vec(2, 4), {
+        type: "playlist",
+        image: "https://i.ytimg.com/vi/UjtOGPJ0URM/mqdefault.jpg",
+        title: "Our Best Stuff",
+        items: greatFilter.map((p) => ({
+            title: p.snippet.title,
+            image: p.snippet.thumbnails.medium.url,
+        })),
+    }),
+    panelAt(vec(6, 8), vec(2, 4), {
+        type: "channel",
+        image: "https://yt3.googleusercontent.com/ytc/AIdro_kNzBhztgwPy3i0rF0P7jTRjKtqcIdSZaHgr8lpvUae_g=s176-c-k-c0x00ffffff-no-rj",
+        title: "Better Ideas",
+    }),
+
+    panelAt(vec(6, 2), vec(2, 6), {
+        type: "channel",
+        image: "https://yt3.googleusercontent.com/ytc/AIdro_k0Sw7jU_Mv6quyQPDsLv_Oh8ZHnZk9_E1ra8xZeQmMxAI=s176-c-k-c0x00ffffff-no-rj",
+        title: "Клятий раціоналіст",
+    }),
+    panelAt(vec(8, 2), vec(2, 6), {
+        type: "channel",
+        image: "https://yt3.googleusercontent.com/-TR5KJCAsxUFz5v5zNidpdK1xWBgi2mhj1u1tZVylVL91TmrKZ8r2OfU7wb49JYEzyz0MEF17A=s176-c-k-c0x00ffffff-no-rj",
+        title: "Cure Music",
+    }),
+    panelAt(vec(10, 2), vec(3, 6), {
+        type: "channel",
+        image: "https://yt3.googleusercontent.com/ytc/AIdro_nPkfGokIxWmwvboXDKzsAFUZ4Abr9bsqBVVcZ4JI2QUto=s176-c-k-c0x00ffffff-no-rj",
+        title: "Folding Ideas",
+        items: foldingIdeasPlaylists.map((p) => ({
+            title: p.snippet.title,
+            image: p.snippet.thumbnails.medium.url,
+        })),
+    }),
+    panelAt(vec(13, 2), vec(2, 6), {
+        type: "channel",
+        image: "https://yt3.googleusercontent.com/JDL33l_KHJICl39nBFgsiYfnJ2EZF_XjIUmwsGVNvJneur1lXYW4N3S7pI_s4rh54nnQIBopdJo=s176-c-k-c0x00ffffff-no-rj",
+        title: "Radio Intense",
+        items: boardElectro.panels[0].data.map((i) => ({
+            title: i.title,
+            image: i.image || "",
+        })),
+    }),
 ];
 
 export function updatePanels() {

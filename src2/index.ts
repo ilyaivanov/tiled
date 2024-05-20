@@ -11,6 +11,7 @@ import {
 
 import "./index.css";
 import { drawMinimap, minimapCanvas } from "./minimap";
+import { findParentOrCurrent } from "../src/ui/html";
 
 const canvas = document.createElement("canvas");
 const ctx = canvas.getContext("2d")!;
@@ -23,8 +24,8 @@ export let mouse = vec(0, 0);
 export let scale = 1;
 export let pos = vec(-200, -200);
 
-export const GRID_SIZE = 100;
-export const GRID_GAP = 10;
+export const GRID_SIZE = 120;
+export const GRID_GAP = 12;
 
 function onResize() {
     baseScale = window.devicePixelRatio || 1;
@@ -74,7 +75,7 @@ window.addEventListener("mouseup", (e) => {
 });
 
 document.addEventListener(
-    "mousewheel",
+    "wheel",
     function onmousewheel(e: WheelEvent) {
         if (e.ctrlKey) {
             const scaleFactor = 1.3;
@@ -82,8 +83,14 @@ document.addEventListener(
             scaleBy(vec(e.clientX, e.clientY), newScale);
             e.preventDefault();
         } else {
-            pos.y -= e.deltaY;
-            updatePanels();
+            let panel = findParentOrCurrent(e.target as HTMLElement, (e) =>
+                e.classList.contains("panel-body")
+            );
+
+            if (!(panel && panel.scrollHeight > panel.clientHeight)) {
+                pos.y -= Math.sign(e.deltaY) * (GRID_SIZE + GRID_GAP);
+                updatePanels();
+            }
         }
     } as any,
     { passive: false }

@@ -57,7 +57,10 @@ export const fragment = (...children: (HTMLElement | undefined)[]) => {
     return res as unknown as HTMLElement;
 };
 
-function assignHtmlElementProps<T extends HTMLElement>(elem: T, props: Props<T>): T {
+function assignHtmlElementProps<T extends HTMLElement>(
+    elem: T,
+    props: Props<T>
+): T {
     if (props.id) elem.id = props.id;
 
     if (props.className) elem.className = props.className;
@@ -77,7 +80,8 @@ function assignHtmlElementProps<T extends HTMLElement>(elem: T, props: Props<T>)
     }
 
     if (props.onClick) elem.addEventListener("click", props.onClick);
-    if (props.onMouseDown) elem.addEventListener("mousedown", props.onMouseDown);
+    if (props.onMouseDown)
+        elem.addEventListener("mousedown", props.onMouseDown);
 
     if (props.ref) props.ref(elem);
 
@@ -100,4 +104,17 @@ export function setElemSize(elem: HTMLElement, size: V2) {
         width: size.x + "px",
         height: size.y + "px",
     });
+}
+
+export function findParentOrCurrent(
+    elem: HTMLElement,
+    predicate: (elem: HTMLElement) => boolean
+): HTMLElement | undefined {
+    while (elem.parentElement) {
+        if (predicate(elem)) return elem;
+
+        elem = elem.parentElement;
+    }
+
+    return undefined;
 }

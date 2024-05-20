@@ -26,7 +26,7 @@ function onResize() {
 
 onResize();
 
-const minimapSize = 300;
+const minimapSize = 100;
 const minimapScale = 35;
 export function drawMinimap() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
