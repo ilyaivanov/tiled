@@ -27,6 +27,7 @@ type Panel = {
     gridSpan: V2;
     el: HTMLElement;
     selectedSection: string;
+
     sections: Record<string, Item[]>;
 };
 
@@ -134,9 +135,9 @@ document.addEventListener("mouseup", endMovingPanel);
 
 type PanelProps = {
     type: "channel" | "playlist";
+    itemId: string;
     image: string;
     title: string;
-    items?: { image: string; title: string }[];
 };
 
 function panelTabButton(panel: Panel, title: string) {
@@ -170,10 +171,37 @@ function loadPanelItems(panel: Panel) {
             .map((p) => ({
                 title: p.snippet.title,
                 image: p.snippet.thumbnails.medium.url,
+                type: panel.selectedSection == "videos" ? "video" : "playlist",
             }))
             .map((p) =>
                 div({
                     className: "panel-item",
+                    onClick: () => {
+                        if (p.type == "playlist") {
+                            const pos = vec(
+                                panel.gridPos.x + panel.gridSpan.x,
+                                panel.gridPos.y
+                            );
+                            const span = vec(
+                                panel.gridSpan.x,
+                                panel.gridSpan.y
+                            );
+                            const newPanel = panelAt(pos, span, {
+                                type: p.type,
+                                itemId: "foo",
+                                image: p.image,
+                                title: p.title,
+                            });
+
+                            panels.push(newPanel);
+
+                            document.body.children[0].insertAdjacentElement(
+                                "afterend",
+                                newPanel.el
+                            );
+                            updatePanels();
+                        }
+                    },
                     children: [img({ src: p.image }), p.title],
                 })
             )
@@ -224,12 +252,6 @@ const panelAt = (gridPos: V2, gridSpan: V2, props: PanelProps) => {
             div({
                 className: "panel-body",
                 onMouseDown: (e) => e.stopPropagation(),
-                children: props.items?.map((p) =>
-                    div({
-                        className: "panel-item",
-                        children: [img({ src: p.image }), p.title],
-                    })
-                ),
             }),
             div({
                 className: "panel-dragger",
@@ -243,20 +265,17 @@ const panelAt = (gridPos: V2, gridSpan: V2, props: PanelProps) => {
 };
 
 export let panels: Panel[] = [
-    panelAt(vec(2, 2), vec(2, 2), {
-        type: "channel",
-        image: "https://yt3.googleusercontent.com/ytc/AIdro_mpYedipdXUXCKkwjQEeFrepFlDHZ0LiczqWeKyG0YmJvA=s176-c-k-c0x00ffffff-no-rj",
-        title: "Vsauce",
-    }),
-    // panelAt(vec(2, 6), vec(2, 4), {
+    // panelAt(vec(2, 2), vec(2, 2), {
     //     type: "channel",
-    //     image: "https://yt3.googleusercontent.com/ytc/AIdro_nVQf8Psqlpa_dTYOWy0WESNzpzzJDUUv2LhGEMt8jQrvs=s176-c-k-c0x00ffffff-no-rj",
-    //     title: "Kurzgesagt – In a Nutshell",
-    //     items: kurzgesagtPlaylist.map((p) => ({
-    //         title: p.snippet.title,
-    //         image: p.snippet.thumbnails.medium.url,
-    //     })),
+    //     image: "https://yt3.googleusercontent.com/ytc/AIdro_mpYedipdXUXCKkwjQEeFrepFlDHZ0LiczqWeKyG0YmJvA=s176-c-k-c0x00ffffff-no-rj",
+    //     title: "Vsauce",
     // }),
+    panelAt(vec(2, 2), vec(2, 4), {
+        type: "channel",
+        itemId: "UCsXVk37bltHxD1rDPwtNM8Q",
+        image: "https://yt3.googleusercontent.com/ytc/AIdro_nVQf8Psqlpa_dTYOWy0WESNzpzzJDUUv2LhGEMt8jQrvs=s176-c-k-c0x00ffffff-no-rj",
+        title: "Kurzgesagt – In a Nutshell",
+    }),
     // panelAt(vec(4, 6), vec(2, 4), {
     //     type: "playlist",
     //     image: "https://i.ytimg.com/vi/UjtOGPJ0URM/mqdefault.jpg",
