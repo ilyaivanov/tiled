@@ -1,9 +1,10 @@
-import { boardElectro } from "../src/data.electro";
+// import { boardElectro } from "../src/data.electro";
 import {
     foldingIdeasPlaylists,
     greatFilter,
     kurzgesagtPlaylist,
 } from "../src/d.yt";
+import { Item } from "../src/index";
 import { div, img, setElemPosition, setElemSize } from "../src/ui/html";
 import {
     V2,
@@ -25,6 +26,8 @@ type Panel = {
     gridPos: V2;
     gridSpan: V2;
     el: HTMLElement;
+    selectedSection: string;
+    sections: Record<string, Item[]>;
 };
 
 export let panelDragging: Panel | undefined;
@@ -35,6 +38,7 @@ export let panelMovingShadowPos = vec(0, 0);
 export let mouseDeltaDuringResize = vec(0, 0);
 let mousePosDuringResize = vec(0, 0);
 
+// this is bullshit, need to figure out when I need  scale and when not
 export const gridToAbs = (v: V2) => mult(v, (GRID_SIZE + GRID_GAP) * scale);
 export const gridToAbs2 = (v: V2) => mult(v, GRID_SIZE + GRID_GAP);
 export const absToGrid = (v: V2) =>
@@ -135,70 +139,106 @@ type PanelProps = {
     items?: { image: string; title: string }[];
 };
 
-function panelTabButton(title: string) {
+function panelTabButton(panel: Panel, title: string) {
     const res = div({
         className: "panel-tab",
         children: [title],
         onMouseDown: (e) => e.stopPropagation(),
-        onClick: () => res.classList.toggle("active"),
+        onClick: () => togglePanelSection(panel, title),
     });
     return res;
+}
+
+function togglePanelSection(panel: Panel, section: string) {
+    panel.selectedSection = section.toLocaleLowerCase();
+    for (const panelTab of panel.el.getElementsByClassName("panel-tab")) {
+        const tab = panelTab as HTMLElement;
+        const isActive =
+            tab.innerText.toLocaleLowerCase() == panel.selectedSection;
+        tab.classList.toggle("active", isActive);
+    }
+    loadPanelItems(panel);
+}
+
+function loadPanelItems(panel: Panel) {
+    const panelBody = panel.el.getElementsByClassName("panel-body")[0];
+    const items =
+        panel.selectedSection == "videos" ? greatFilter : kurzgesagtPlaylist;
+
+    panelBody.replaceChildren(
+        ...items
+            .map((p) => ({
+                title: p.snippet.title,
+                image: p.snippet.thumbnails.medium.url,
+            }))
+            .map((p) =>
+                div({
+                    className: "panel-item",
+                    children: [img({ src: p.image }), p.title],
+                })
+            )
+    );
 }
 
 const panelAt = (gridPos: V2, gridSpan: V2, props: PanelProps) => {
     const res: Panel = {
         gridPos,
         gridSpan,
-        el: div({
-            className: "panel",
-            onMouseDown: (e) => startMovingPanel(e, res),
-            children: [
-                props.type == "playlist"
-                    ? div({
-                          className: "playlist-youtube-title",
-                          style: { backgroundImage: `url(${props.image})` },
-                          children: [
-                              div({
-                                  className: "playlist-youtube-title-text",
-                                  children: [props.title],
-                              }),
-                          ],
-                      })
-                    : div({
-                          className: "panel-title",
-                          children: [
-                              img({
-                                  className: "panel-title-channel-image",
-                                  src: props.image,
-                              }),
-                              props.title,
-                          ],
-                      }),
-                props.type == "channel" &&
-                    div({
-                        className: "panel-tabs",
-                        children: [
-                            panelTabButton("Videos"),
-                            panelTabButton("Playlists"),
-                        ],
-                    }),
-                div({
-                    className: "panel-body",
-                    onMouseDown: (e) => e.stopPropagation(),
-                    children: props.items?.map((p) =>
-                        div({
-                            className: "panel-item",
-                            children: [img({ src: p.image }), p.title],
-                        })
-                    ),
-                }),
-                div({
-                    className: "panel-dragger",
-                    onMouseDown: (e) => onPanelStartResize(e, res),
-                }),
-            ],
-        }),
+        selectedSection: "videos",
+        sections: {},
+        el: undefined!,
     };
+    const el = div({
+        className: "panel",
+        onMouseDown: (e) => startMovingPanel(e, res),
+        children: [
+            props.type == "playlist"
+                ? div({
+                      className: "playlist-youtube-title",
+                      style: { backgroundImage: `url(${props.image})` },
+                      children: [
+                          div({
+                              className: "playlist-youtube-title-text",
+                              children: [props.title],
+                          }),
+                      ],
+                  })
+                : div({
+                      className: "panel-title",
+                      children: [
+                          img({
+                              className: "panel-title-channel-image",
+                              src: props.image,
+                          }),
+                          props.title,
+                      ],
+                  }),
+            props.type == "channel" &&
+                div({
+                    className: "panel-tabs",
+                    children: [
+                        panelTabButton(res, "Videos"),
+                        panelTabButton(res, "Playlists"),
+                    ],
+                }),
+            div({
+                className: "panel-body",
+                onMouseDown: (e) => e.stopPropagation(),
+                children: props.items?.map((p) =>
+                    div({
+                        className: "panel-item",
+                        children: [img({ src: p.image }), p.title],
+                    })
+                ),
+            }),
+            div({
+                className: "panel-dragger",
+                onMouseDown: (e) => onPanelStartResize(e, res),
+            }),
+        ],
+    });
+    res.el = el;
+    togglePanelSection(res, res.selectedSection);
     return res;
 };
 
@@ -208,58 +248,59 @@ export let panels: Panel[] = [
         image: "https://yt3.googleusercontent.com/ytc/AIdro_mpYedipdXUXCKkwjQEeFrepFlDHZ0LiczqWeKyG0YmJvA=s176-c-k-c0x00ffffff-no-rj",
         title: "Vsauce",
     }),
-    panelAt(vec(2, 6), vec(2, 4), {
-        type: "channel",
-        image: "https://yt3.googleusercontent.com/ytc/AIdro_nVQf8Psqlpa_dTYOWy0WESNzpzzJDUUv2LhGEMt8jQrvs=s176-c-k-c0x00ffffff-no-rj",
-        title: "Kurzgesagt – In a Nutshell",
-        items: kurzgesagtPlaylist.map((p) => ({
-            title: p.snippet.title,
-            image: p.snippet.thumbnails.medium.url,
-        })),
-    }),
-    panelAt(vec(4, 6), vec(2, 4), {
-        type: "playlist",
-        image: "https://i.ytimg.com/vi/UjtOGPJ0URM/mqdefault.jpg",
-        title: "Our Best Stuff",
-        items: greatFilter.map((p) => ({
-            title: p.snippet.title,
-            image: p.snippet.thumbnails.medium.url,
-        })),
-    }),
-    panelAt(vec(6, 8), vec(2, 4), {
-        type: "channel",
-        image: "https://yt3.googleusercontent.com/ytc/AIdro_kNzBhztgwPy3i0rF0P7jTRjKtqcIdSZaHgr8lpvUae_g=s176-c-k-c0x00ffffff-no-rj",
-        title: "Better Ideas",
-    }),
+    // panelAt(vec(2, 6), vec(2, 4), {
+    //     type: "channel",
+    //     image: "https://yt3.googleusercontent.com/ytc/AIdro_nVQf8Psqlpa_dTYOWy0WESNzpzzJDUUv2LhGEMt8jQrvs=s176-c-k-c0x00ffffff-no-rj",
+    //     title: "Kurzgesagt – In a Nutshell",
+    //     items: kurzgesagtPlaylist.map((p) => ({
+    //         title: p.snippet.title,
+    //         image: p.snippet.thumbnails.medium.url,
+    //     })),
+    // }),
+    // panelAt(vec(4, 6), vec(2, 4), {
+    //     type: "playlist",
+    //     image: "https://i.ytimg.com/vi/UjtOGPJ0URM/mqdefault.jpg",
+    //     title: "Our Best Stuff",
+    //     items: greatFilter.map((p) => ({
+    //         title: p.snippet.title,
+    //         image: p.snippet.thumbnails.medium.url,
+    //     })),
+    // }),
+    // panelAt(vec(6, 8), vec(2, 4), {
+    //     type: "channel",
+    //     image: "https://yt3.googleusercontent.com/ytc/AIdro_kNzBhztgwPy3i0rF0P7jTRjKtqcIdSZaHgr8lpvUae_g=s176-c-k-c0x00ffffff-no-rj",
+    //     title: "Better Ideas",
+    // }),
 
-    panelAt(vec(6, 2), vec(2, 6), {
-        type: "channel",
-        image: "https://yt3.googleusercontent.com/ytc/AIdro_k0Sw7jU_Mv6quyQPDsLv_Oh8ZHnZk9_E1ra8xZeQmMxAI=s176-c-k-c0x00ffffff-no-rj",
-        title: "Клятий раціоналіст",
-    }),
-    panelAt(vec(8, 2), vec(2, 6), {
-        type: "channel",
-        image: "https://yt3.googleusercontent.com/-TR5KJCAsxUFz5v5zNidpdK1xWBgi2mhj1u1tZVylVL91TmrKZ8r2OfU7wb49JYEzyz0MEF17A=s176-c-k-c0x00ffffff-no-rj",
-        title: "Cure Music",
-    }),
-    panelAt(vec(10, 2), vec(3, 6), {
-        type: "channel",
-        image: "https://yt3.googleusercontent.com/ytc/AIdro_nPkfGokIxWmwvboXDKzsAFUZ4Abr9bsqBVVcZ4JI2QUto=s176-c-k-c0x00ffffff-no-rj",
-        title: "Folding Ideas",
-        items: foldingIdeasPlaylists.map((p) => ({
-            title: p.snippet.title,
-            image: p.snippet.thumbnails.medium.url,
-        })),
-    }),
-    panelAt(vec(13, 2), vec(2, 6), {
-        type: "channel",
-        image: "https://yt3.googleusercontent.com/JDL33l_KHJICl39nBFgsiYfnJ2EZF_XjIUmwsGVNvJneur1lXYW4N3S7pI_s4rh54nnQIBopdJo=s176-c-k-c0x00ffffff-no-rj",
-        title: "Radio Intense",
-        items: boardElectro.panels[0].data.map((i) => ({
-            title: i.title,
-            image: i.image || "",
-        })),
-    }),
+    // panelAt(vec(6, 2), vec(2, 6), {
+    //     type: "channel",
+    //     image: "https://yt3.googleusercontent.com/ytc/AIdro_k0Sw7jU_Mv6quyQPDsLv_Oh8ZHnZk9_E1ra8xZeQmMxAI=s176-c-k-c0x00ffffff-no-rj",
+    //     title: "Клятий раціоналіст",
+    // }),
+    // panelAt(vec(8, 2), vec(2, 6), {
+    //     type: "channel",
+    //     image: "https://yt3.googleusercontent.com/-TR5KJCAsxUFz5v5zNidpdK1xWBgi2mhj1u1tZVylVL91TmrKZ8r2OfU7wb49JYEzyz0MEF17A=s176-c-k-c0x00ffffff-no-rj",
+    //     title: "Cure Music",
+    // }),
+    // panelAt(vec(10, 2), vec(3, 6), {
+    //     type: "channel",
+    //     image: "https://yt3.googleusercontent.com/ytc/AIdro_nPkfGokIxWmwvboXDKzsAFUZ4Abr9bsqBVVcZ4JI2QUto=s176-c-k-c0x00ffffff-no-rj",
+    //     title: "Folding Ideas",
+    //     items: foldingIdeasPlaylists.map((p) => ({
+    //         title: p.snippet.title,
+    //         image: p.snippet.thumbnails.medium.url,
+    //     })),
+    // }),
+    //   panelAt(vec(13, 2), vec(2, 6), {
+    //     type: "channel",
+    //     image:
+    //       "https://yt3.googleusercontent.com/JDL33l_KHJICl39nBFgsiYfnJ2EZF_XjIUmwsGVNvJneur1lXYW4N3S7pI_s4rh54nnQIBopdJo=s176-c-k-c0x00ffffff-no-rj",
+    //     title: "Radio Intense",
+    //     items: boardElectro.panels[0].data.map((i) => ({
+    //       title: i.title,
+    //       image: i.image || "",
+    //     })),
+    //   }),
 ];
 
 export function updatePanels() {
