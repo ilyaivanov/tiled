@@ -114,6 +114,7 @@ document.addEventListener(
 
             if (!(panel && panel.scrollHeight > panel.clientHeight)) {
                 pos.y -= e.deltaY;
+                pos.x -= e.deltaX;
                 updatePanels();
             }
         }

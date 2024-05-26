@@ -1,4 +1,4 @@
-import { div, img, setElemPosition, setElemSize } from "./ui/html";
+import { div, img, input, setElemPosition, setElemSize } from "./ui/html";
 import {
     V2,
     add,
@@ -226,6 +226,12 @@ async function loadPanelItems(panel: Panel) {
     );
 }
 
+function removePanel(panel: Panel) {
+    panels = panels.filter((p) => p != panel);
+    panel.el.remove();
+    savePanelState(panels, "main");
+}
+
 export const addPanel = (panel: Panel) => {
     const el = div({
         className: "panel",
@@ -238,7 +244,15 @@ export const addPanel = (panel: Panel) => {
                       children: [
                           div({
                               className: "playlist-youtube-title-text",
-                              children: [panel.title],
+                              children: [
+                                  panel.title,
+                                  input({
+                                      className: "panel-remove",
+                                      type: "button",
+                                      value: "X",
+                                      onClick: () => removePanel(panel),
+                                  }),
+                              ],
                           }),
                       ],
                   })
@@ -250,6 +264,12 @@ export const addPanel = (panel: Panel) => {
                               src: panel.image,
                           }),
                           panel.title,
+                          input({
+                              className: "panel-remove",
+                              type: "button",
+                              value: "X",
+                              onClick: () => removePanel(panel),
+                          }),
                       ],
                   }),
             panel.type == "channel" &&
