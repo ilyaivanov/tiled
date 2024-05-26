@@ -1,4 +1,4 @@
-import { diffScalar, mult } from "../src/ui/vec";
+import { diffScalar, mult } from "./ui/vec";
 import { GRID_GAP, GRID_SIZE, pos, scale } from "./index";
 import { panels } from "./panel";
 

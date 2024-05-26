@@ -1,7 +1,9 @@
-import { V2, add, diff, mult, vec } from "../src/ui/vec";
+import { V2, add, diff, mult, roundV2, vec } from "./ui/vec";
+import { findParentOrCurrent } from "./ui/html";
 import {
     movePanel,
     onPanelResizing,
+    addPanel,
     panelDragging,
     panelMovingShadowPos,
     panelResizing,
@@ -9,9 +11,10 @@ import {
     updatePanels,
 } from "./panel";
 
-import "./index.css";
 import { drawMinimap, minimapCanvas } from "./minimap";
-import { findParentOrCurrent } from "../src/ui/html";
+import "./index.css";
+import { getChannelInfo } from "./api";
+import { loadPanelStateForBoard, savePanelState } from "./localStorage";
 
 const canvas = document.createElement("canvas");
 const ctx = canvas.getContext("2d")!;
@@ -43,17 +46,39 @@ onResize();
 window.addEventListener("resize", onResize);
 
 document.body.appendChild(canvas);
-document.body.append(...panels.map((p) => p.el));
 document.body.appendChild(minimapCanvas);
 
-updatePanels();
+const savedPanels = loadPanelStateForBoard("main");
+if (savedPanels) for (const savedPanel of savedPanels) addPanel(savedPanel);
 
 export let isSpaceDown = false;
-window.addEventListener("keydown", (e) => {
+window.addEventListener("keydown", async (e) => {
     if (e.code == "Space") {
         if (!document.body.style.cursor) document.body.style.cursor = "grab";
         isSpaceDown = true;
         e.preventDefault();
+    }
+    if (e.code == "KeyC") {
+        const text = await navigator.clipboard.readText();
+        const channelInfo = await getChannelInfo(text);
+        const snappedGridPosition = vec(4, 2);
+        const span = vec(2, 4);
+        addPanel({
+            gridPos: snappedGridPosition,
+            gridSpan: span,
+            type: "channel",
+            itemId: channelInfo.id,
+            image: channelInfo.image,
+            title: channelInfo.title,
+            selectedSection: "Videos",
+
+            allVideosPlaylistId: channelInfo.allVideosPlaylistId,
+            allVideos: [],
+            playlists: [],
+            el: undefined!,
+        });
+
+        savePanelState(panels, "main");
     }
 });
 window.addEventListener("keyup", (e) => {
